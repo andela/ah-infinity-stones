@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/andela/ah-infinity-stones.svg?branch=develop)](https://travis-ci.org/andela/ah-infinity-stones)
+[![Coverage Status](https://coveralls.io/repos/github/andela/ah-infinity-stones/badge.svg)](https://coveralls.io/github/andela/ah-infinity-stones)
 
 Authors Haven - A Social platform for the creative at heart.
 =======
