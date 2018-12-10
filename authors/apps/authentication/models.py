@@ -75,6 +75,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     # falsed.
     is_staff = models.BooleanField(default=False)
 
+    # user has the privellege to opt in and out of notifications. By default
+    # it's set to False
+    is_subscribed_email = models.BooleanField(default=False)
+    is_subscribed_in_app = models.BooleanField(default=False)
+
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True)
 

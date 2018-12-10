@@ -1,10 +1,11 @@
-# import jwt
-#
-# from django.conf import settings
-#
-# from rest_framework import authentication, exceptions
-#
-# from .models import User
+from rest_framework import authentication
+from .models import User
 
-"""Configure JWT Here"""
 
+class JWTAuthentication(authentication.BaseAuthentication):
+    """
+    This is called on every request to check if the user is authenticated
+    """
+
+    def authenticate(self, request):
+       pass

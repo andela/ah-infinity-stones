@@ -1,21 +1,6 @@
 from django.db import models
 from ..authentication.models import User
-
-
-class Article(models.Model):
-    """This class creates the Article model"""
-    title = models.CharField(max_length=50, null=False, unique=True)
-    author = models.ManyToManyField(User)
-    description = models.CharField(max_length=250, null=False, default="")
-    body = models.TextField(null=False, default="")
-    read_time = models.PositiveIntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        """Returns a human readable representation of the model instance"""
-        return "{}".format(self.title)
-
+from ..articles.models import Article
 
 class Notification(models.Model):
     """This class creates the Notification model"""

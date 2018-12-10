@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView,RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,7 +26,8 @@ class RegistrationAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        message = {'Message': '{} registered successfully'.format(user['username'])}
+        return Response(message, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(APIView):
