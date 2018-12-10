@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 
 from rest_framework import serializers
-
+from rest_framework.validators import UniqueValidator
 from .models import User
 
 
@@ -10,8 +10,53 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     # Ensure passwords are at least 8 characters long, no longer than 128
     # characters, and can not be read by the client.
-    password = serializers.CharField(
-        max_length=128, min_length=8, write_only=True)
+    password = serializers.RegexField(
+        regex='^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=*!]).{8,128}$',
+        required=True,
+        write_only=True,
+        error_messages={
+            'required': 'A password is required',
+            'invalid': 'A password must be between 8-128 chars long and must'
+                        ' contain:'
+                        ' capital letter'
+                        ', number'
+                        ' and a special character'
+        }
+    )
+    # Ensure a user cannot re-use an email to register and must be valid
+    email = serializers.EmailField(
+        required=True,
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message='The email provided is already in use!',
+            )
+        ],
+        error_messages={
+            'required': 'An email is required',
+            'invalid': "Invalid email: email must be in the format xxxx@xxxx.xx"
+        }
+    )
+    # ensure username meets the right criteria:
+    # - must be unique
+    # - must be a minimum of 4 characters and a max of 15 characters
+    # - can only contain letters, numbers, hyphens (-), underscores (_) ,
+    #   and periods (.)
+    username = serializers.RegexField(
+        regex='^(?=.*[a-z])[a-zA-Z0-9_.-]{4,15}$',
+        required=True,
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message='Username provided already in use',
+            )
+        ],
+        error_messages={
+            'invalid': 'Username must be between 4-15 chars,cannot have a space and can only contain'
+            ' letters, numbers, -, _ and a .',
+            'required': 'A username is required',
+        }
+    )
 
     # The client should not be able to send a token along with a registration
     # request. Making `token` read-only handles that for us.
@@ -135,5 +180,7 @@ class UserSerializer(serializers.ModelSerializer):
 class SocialAuthSerializer(serializers.Serializer):
     """ This class serializes keys and key_secrets google, twitter and facebook. """
     provider = serializers.CharField(max_length=255, required=True)
-    key = serializers.CharField(max_length=1024, required=True, trim_whitespace=True)
-    key_secret = serializers.CharField(max_length=300, allow_null=True, default=None, trim_whitespace=True)
+    key = serializers.CharField(
+        max_length=1024, required=True, trim_whitespace=True)
+    key_secret = serializers.CharField(
+        max_length=300, allow_null=True, default=None, trim_whitespace=True)

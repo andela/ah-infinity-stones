@@ -158,6 +158,10 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY':
     'error',
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'authors.apps.authentication.backends.JWTAuthentication',
+        'authors.apps.authentication.backends.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+         'rest_framework.authentication.BasicAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated', )
 }

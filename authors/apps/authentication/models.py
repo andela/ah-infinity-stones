@@ -64,12 +64,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     # will simply offer users a way to deactivate their account instead of
     # letting them delete it. That way they won't show up on the site anymore,
     # but we can still analyze the data.
-    is_active = models.BooleanField(default=True)
+    # By default it's to default because a user needs to activate their acc
+    is_active = models.BooleanField(default=False)
 
     # The `is_staff` flag is expected by Django to determine who can and cannot
     # log into the Django admin site. For most users, this flag will always be
     # falsed.
     is_staff = models.BooleanField(default=False)
+
+    # user has the privellege to opt in and out of notifications. By default
+    # it's set to False
+    is_subscribed_email = models.BooleanField(default=False)
+    is_subscribed_in_app = models.BooleanField(default=False)
 
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True)
