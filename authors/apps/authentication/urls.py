@@ -1,7 +1,8 @@
 from django.urls import path, re_path
-from .views import (LoginAPIView, RegistrationAPIView,
-                    SocialAuthAPIView, ActivationView
-                    )
+
+from .views import LoginAPIView, RegistrationAPIView, \
+    UserRetrieveUpdateAPIView, SocialAuthAPIView, ActivationView,\
+    PasswordResetBymailAPIView
 
 urlpatterns = [
     path('users/', RegistrationAPIView.as_view(), name='register'),
@@ -13,4 +14,5 @@ urlpatterns = [
     ',
             ActivationView.as_view(), name='activate'),
     path('socialAuth/', SocialAuthAPIView.as_view()),
+    path('user/password-reset/', PasswordResetBymailAPIView.as_view()),
 ]

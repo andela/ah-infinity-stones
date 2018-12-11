@@ -102,6 +102,9 @@ DATABASES = {
         'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
         'HOST': '',
         'PORT': '5432',
+        'TEST': {
+            'NAME': os.environ.get('DATABASE_TEST', '')
+        },
     },
 }
 
@@ -214,3 +217,15 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.user_details',
 )
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/articles'
+    'NON_FIELD_ERRORS_KEY':
+    'error',
+    'DEFAULT_AUTHENTICATION_CLASSES':
+    ('authors.apps.authentication.backends.JWTAuthentication', ),
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST = 'smtp.googlemail.com'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')

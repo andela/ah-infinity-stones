@@ -59,6 +59,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
     )
 
     token = serializers.SerializerMethodField()
+    password = serializers.CharField(
+        max_length=128, min_length=8, write_only=True)
 
     # The client should not be able to send a token along with a registration
     # request. Making `token` read-only handles that for us.
@@ -187,3 +189,20 @@ class SocialAuthSerializer(serializers.Serializer):
         max_length=2048, required=True, trim_whitespace=True)
     access_token_secret = serializers.CharField(
         max_length=2048, allow_null=True, default=None, trim_whitespace=True)
+class ResetQuestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    @staticmethod
+    def validate_email_data(data):
+        email = data.get('email')
+
+        print("serializer_email")
+        # check if eny email exists in the data
+        if email is None:
+            raise serializers.ValidationError(
+                'An email address is required to send request')
+        elif User.objects.filter(email=email).exists():
+            return {"email": email}
+
+        raise serializers.ValidationError(
+            'User with that email does not exist, Please enter your email')

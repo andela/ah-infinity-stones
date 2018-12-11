@@ -31,15 +31,26 @@ from rest_framework.permissions import (
 
 from .renderers import UserJSONRenderer
 from .serializers import (
+<<<<<<< HEAD
     LoginSerializer, RegistrationSerializer,
     UserSerializer, SocialAuthSerializer
 )
+=======
+    LoginSerializer, RegistrationSerializer, UserSerializer, ResetQuestSerializer
+)
+from .models import User
+from rest_framework.generics import (RetrieveUpdateDestroyAPIView,
+    CreateAPIView,
+    UpdateAPIView)
+from django.core.mail import send_mail
+from ...settings import EMAIL_HOST_USER
+>>>>>>> feature(resetPassword): User able to reset password via email
 
 
 class RegistrationAPIView(APIView):
     # Allow any user (authenticated or not) to hit this endpoint.
-    permission_classes = (AllowAny,)
-    renderer_classes = (UserJSONRenderer,)
+    permission_classes = (AllowAny, )
+    renderer_classes = (UserJSONRenderer, )
     serializer_class = RegistrationSerializer
 
     def post(self, request):
@@ -156,8 +167,8 @@ class SocialAuthAPIView(APIView):
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
-    permission_classes = (IsAuthenticated,)
-    renderer_classes = (UserJSONRenderer,)
+    permission_classes = (IsAuthenticated, )
+    renderer_classes = (UserJSONRenderer, )
     serializer_class = UserSerializer
 >>>>>>> feat(Article): Implement Article CRUD
 
@@ -175,6 +186,7 @@ class SocialAuthAPIView(CreateAPIView):
     serializer_class = SocialAuthSerializer
     renderer_classes = (UserJSONRenderer,)
 
+<<<<<<< HEAD
     def create(self, request, *args, **kwargs):
         """Get social auth provider and token and generates the user token based on the user
          email"""
@@ -225,3 +237,50 @@ class SocialAuthAPIView(CreateAPIView):
             serialized_data["email"], serialized_data["username"]
         )
         return Response(serialized_data, status=status.HTTP_200_OK)
+=======
+        # Here is that serialize, validate, save pattern we talked about
+        # before.
+        serializer = self.serializer_class(
+            request.user, data=serializer_data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PasswordResetBymailAPIView(CreateAPIView):
+    # Allow user to reset password via mail
+    serializer_class = ResetQuestSerializer
+
+    def post(self, request):
+        user_name = request.data['user']
+        serializer = self.serializer_class.validate_email_data(data=user_name)
+
+
+        # format the email
+        hosting = request.get_host()
+        if request.is_secure():
+            response = "https://"
+        else:
+            response = "http://"
+        resetpage = response + hosting + 'api/reset_password/'
+        subject = "You requested password reset"
+        message = "Hello {user_name} you requested for a change in your \n"
+        "password.Please click on the link bellow to continue \n\n{link}\n\n."
+        "If this was not \n"
+        "you Please ignore the message. ".format(user_data=user_name['email'])
+        "you Please ignore the message. ".format(user_data=user_name['email'])
+        from_email = EMAIL_HOST_USER
+        to_list = [user_name['email']]
+
+        # send the email to user
+
+        send_mail(subject, message, from_email, to_list, fail_silently=True)
+
+        # Response to the user
+        return Response(
+            {
+                "message": "Please check your email for password reset link"
+            },
+            status=status.HTTP_200_OK)
+>>>>>>> feature(resetPassword): User able to reset password via email

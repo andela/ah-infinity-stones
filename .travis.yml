@@ -32,3 +32,6 @@ after_success:
 notifications:
   email: false
 
+# run coveralls after successful tests
+after_success:
+- coveralls
