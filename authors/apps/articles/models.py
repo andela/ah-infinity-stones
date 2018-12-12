@@ -44,8 +44,9 @@ class FavoriteArticle(models.Model):
 
 class Comment(models.Model):
     """This class represents the Favorite Comment model"""
-    article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
+    # article = models.ManyToManyField(Article)
+    article = models.ForeignKey(Article, related_name='commento', null=True, blank=True, on_delete=models.CASCADE) 
+    user = models.ForeignKey(User, related_name='commento', blank=True, null=True, on_delete=models.CASCADE)
     comment = models.CharField(max_length=200, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

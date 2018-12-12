@@ -9,7 +9,6 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 from django.core.mail import send_mail
-from django.db import models
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -56,6 +55,7 @@ class UserManager(BaseUserManager):
         mail_subject = 'Activate your account.'
         to_email = user.email
         from_email = 'infinitystones.team@gmail.com'
+        # Send account confirm/activation email
         send_mail(
             mail_subject,
             'Verify your Account',
