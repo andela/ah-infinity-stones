@@ -12,6 +12,7 @@ class UserTestCase(TestCase):
     """This class contains tests for the user login process through
     Twiiter, Facebook or Google
     """
+
     def setUp(self):
         """This function defines variables to be used throughout the class"""
         self.client = APIClient()
@@ -23,7 +24,6 @@ class UserTestCase(TestCase):
         self.twitter_secret = os.getenv('TWITTER_SECRET')
 
     def test_google_login_no_access_key(self):
-
         """This method test that a user cannot login via Google
         if there's no access_key
         """
@@ -37,7 +37,6 @@ class UserTestCase(TestCase):
         self.assertEqual(json.loads(response.data)["token"], None)
 
     def test_google_login_no_access_key_secret(self):
-
         """This method test that a user cannot login via Google
         if there's no access_key_secret
         """
@@ -50,7 +49,6 @@ class UserTestCase(TestCase):
         self.assertEqual(json.loads(response.data)["token"], None)
 
     def test_google_login(self):
-
         """This method test that a user can login through google"""
         data = {"provider": "google",
                 "access_key": self.google_key,
@@ -88,7 +86,6 @@ class UserTestCase(TestCase):
         self.assertEqual(json.loads(response.data)["token"], None)
 
     def test_twitter_login(self):
-
         """This method test that a user can login through twitter"""
         data = {"provider": "twitter",
                 "access_key": self.twitter_key,
@@ -100,7 +97,6 @@ class UserTestCase(TestCase):
         self.assertNotEqual(json.loads(response.data)["token"], None)
 
     def test_facebook_login_no_access_key(self):
-
         """This method test that a user cannot login via Facebook
         if there's no access_key
         """
@@ -113,7 +109,6 @@ class UserTestCase(TestCase):
         self.assertEqual(json.loads(response.data)["token"], None)
 
     def test_facebook_login_no_access_key_secret(self):
-
         """This method test that a user cannot login via Facebook
         if there's no access_key_secret
         """
@@ -126,7 +121,6 @@ class UserTestCase(TestCase):
         self.assertEqual(json.loads(response.data)["token"], None)
 
     def test_facebook_login(self):
-
         """This method test that a user can login through Facebook"""
         data = {"provider": "facebook",
                 "access_key": self.facebook_key,

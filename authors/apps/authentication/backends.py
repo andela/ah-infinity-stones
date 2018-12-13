@@ -11,7 +11,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request):
         """This method validates user token and returns the token along with\
-         the user"""
+         the user email address"""
+
         token = authentication.get_authorization_header(request)
         # Check whether a token is returned
         if not token:
@@ -29,19 +30,20 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         # Check whether the user is active
         if not user.is_active:
-            raise AuthenticationFailed("Your account is inactive. Please visit your\
-             account to activate")
+            raise AuthenticationFailed("Your account is disabled, please "
+                                       "visit your email to activate your account")
         return (user, token)
 
-    def generate_token(self, email):
+    def generate_token(self, email, username):
         """
         Generate and return a decoded token.
         """
-        date_time = datetime.now() + timedelta(days=2)
+        date = datetime.now() + timedelta(days=25)
 
         payload = {
             'email': email,
-            'exp': int(date_time .strftime('%s'))
+            'username': username,
+            'exp': int(date.strftime('%s'))
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        return token.decode('utf-8')
+        return token.decode()

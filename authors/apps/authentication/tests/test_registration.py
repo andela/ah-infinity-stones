@@ -10,6 +10,11 @@ class UserTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.base = BaseSetUp()
+
+        self.login_data = {
+            "username": "remmy",
+            "password": "hgfhdbfsjhb"
+        }
         self.reg_url = reverse('authentication:register')
 
     def test_register_user_successfully(self):
@@ -21,7 +26,7 @@ class UserTestCase(TestCase):
             format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn(b"successfully", response.content)
-        
+
     def test_send_verification_mail(self):
         """Test that checks if a verification mail is sent"""
         self.email_verification = {"user": {

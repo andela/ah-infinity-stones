@@ -58,6 +58,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         }
     )
 
+    token = serializers.SerializerMethodField()
+
     # The client should not be able to send a token along with a registration
     # request. Making `token` read-only handles that for us.
 
@@ -65,7 +67,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password']
+        fields = ['email', 'username', 'password', 'token']
 
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.
@@ -178,9 +180,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SocialAuthSerializer(serializers.Serializer):
-    """ This class serializes keys and key_secrets google, twitter and facebook. """
+    """This is a serializer class for social sites keys and secret keys."""
     provider = serializers.CharField(max_length=255, required=True)
-    key = serializers.CharField(
-        max_length=1024, required=True, trim_whitespace=True)
-    key_secret = serializers.CharField(
-        max_length=300, allow_null=True, default=None, trim_whitespace=True)
+    access_token = serializers.CharField(
+        max_length=2048, required=True, trim_whitespace=True)
+    access_token_secret = serializers.CharField(
+        max_length=2048, allow_null=True, default=None, trim_whitespace=True)

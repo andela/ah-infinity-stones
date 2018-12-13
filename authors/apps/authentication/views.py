@@ -111,7 +111,7 @@ class ActivationView(APIView):
         except(TypeError, ValueError, OverflowError):
             user = None
             return Response("There is no such user."+str(user))
-        
+
 
 class LoginAPIView(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)

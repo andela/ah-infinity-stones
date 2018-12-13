@@ -1,5 +1,4 @@
 """authors URL Configuration
-
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/1.11/topics/http/urls/
 Examples:
@@ -15,6 +14,8 @@ Including another URLconf
 """
 from django.urls import include, path
 from django.contrib import admin
+from django.contrib.auth import login
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', include('authors.apps.articles.url')),
@@ -24,4 +25,5 @@ urlpatterns = [
     path('', include('authors.apps.articles.url')),
     path('api/', include(('authors.apps.authentication.urls',
                           'authentication'), namespace='authentication')),
+    path('oauth/', include('social_django.urls', namespace='social')),
 ]
