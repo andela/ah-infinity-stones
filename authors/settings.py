@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'authors.apps.articles',
     'authors.apps.notifications',
     'social_django',
+    'taggit',
+
 ]
 
 MIDDLEWARE = [
@@ -90,7 +92,8 @@ WSGI_APPLICATION = 'authors.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'), conn_max_age=1000)
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'),
+                                      conn_max_age=1000)
 }
 
 # Password validation
@@ -99,7 +102,8 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME':
-        'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'django.contrib.auth.password_validation.'
+        'UserAttributeSimilarityValidator',
     },
     {
         'NAME':

@@ -5,6 +5,7 @@ from authors.apps.articles.models import (
     Highlight, CommentHistory
 )
 
+
 class ModelTestCase(TestCase):
     """This class defines the test suit for the artile models"""
 

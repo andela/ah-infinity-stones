@@ -112,7 +112,8 @@ class ActivationView(APIView):
                 return Response({'message': 'Activation link has expired'})
             else:
                 if user is not None and jwt.decode(token,
-                                                   settings.SECRET_KEY, algorithms='HS256')['email']\
+                                                   settings.SECRET_KEY,
+                                                   algorithms='HS256')['email']\
                         == user.email:
                     user.is_active = True
                     user.save()

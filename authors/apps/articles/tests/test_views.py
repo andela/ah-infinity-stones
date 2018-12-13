@@ -1,56 +1,188 @@
+import jwt
+
 from rest_framework import status
 from django.test import TestCase
 from django.urls import reverse
-from .test_config import MainTestConfig
+from django.conf import settings
+
+from ..models import User
 from authors.apps.authentication.tests.test_setup import BaseSetUp
 from authors.apps.articles.models import (Article)
 
 
-class CreateArticleTestCase(MainTestConfig):
+class CreateArticleTestCase(TestCase):
     def setUp(self):
+        """Test method that runs before very test"""
         self.base = BaseSetUp()
         self.client = self.base.client
+        self.user = {
+            'user': {
+                'username': 'remmy',
+                'email': 'remmy@test.com',
+                'password': '@Password123'
+            }
+        }
         self.article_data = {
             'title': 'The war storry',
-            'author': 1,
-            'tag': [1],
+            'tag': ['js'],
             'description': 'Love is blind',
             'body': 'I really loved war until...',
-            'read_time': 3
         }
-        self.token = "eSknaojdIdlafesodoilkjIKLLKLJnjudalfdJndajfdaljfeESFdafjdalfjaofje"
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+
+        response = self.client.post(
+            reverse('authentication:register'), self.user, format="json")
+        decoded = jwt.decode(
+            response.data['Token'], settings.SECRET_KEY, algorithm='HS256')
+        user = User.objects.get(email=decoded['email'])
+        user.is_active = True
+        self.token = response.data['Token']
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        user.save()
+        self.article_url = reverse('articles:articles')
 
     def test_post_article(self):
+        """Test that a logged in user can post an article"""
         response = self.client.post(
-            reverse('articles'), self.article_data, format="json")
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_user_can_get_an_article(self):
-        response = self.client.get(reverse('list', ))
+    def test_user_can_get_all_articles(self):
+        """Test that a user can get all articles"""
+        response = self.client.get(self.article_url,)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_user_can_get_one_article(self):
+        """Test that a user can get a single articles"""
+        self.client.post(self.article_url, self.article_data, format="json")
+        article = Article.objects.get()
+        response = self.client.get(self.article_url,
+                                   kwargs={'art_slug': article.art_slug})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_empty_title(self):
+        """Test that a validates that the title is not empty"""
+        self.empty_title = {
+            'title': '',
+            'tag': ['js'],
+            'description': 'Love is blind',
+            'body': 'I really loved war until...',
+        }
+        response = self.client.post(self.article_url, self.empty_title,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field may not be blank',
+                      response.content)
+
+    def test_empty_description(self):
+        """Test that a validates that the description is not empty"""
+
+        self.empty_description = {
+            'title': 'remmy',
+            'tag': ['js'],
+            'description': '',
+            'body': 'I really loved war until...',
+        }
+        response = self.client.post(self.article_url, self.empty_description,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field may not be blank',
+                      response.content)
+
+    def test_empty_body(self):
+        """Test that a validates that the body is not empty"""
+
+        self.empty_body = {
+            'title': 'remmy',
+            'tag': ['js'],
+            'description': 'yes please',
+            'body': '',
+        }
+        response = self.client.post(self.article_url, self.empty_body,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field may not be blank',
+                      response.content)
+
+    def test_missing_title(self):
+        """Test that a validates that the title field is not missing"""
+        self.missing_title = {
+            'tag': ['js'],
+            'description': 'yes please',
+            'body': '',
+        }
+        response = self.client.post(self.article_url, self.missing_title,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required',
+                      response.content)
+
+    def test_missing_tag(self):
+        """Test that a validates that the tag field is not missing"""
+        self.missing_tag = {
+            'title': 'remmy',
+            'description': 'yes please',
+            'body': ''
+        }
+        response = self.client.post(self.article_url, self.missing_tag,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required',
+                      response.content)
+
+    def test_missing_body(self):
+        """Test that a validates that the body field is not missing"""
+        self.missing_body = {
+            'title': 'remmy',
+            'description': 'yes please',
+            'tags': []
+        }
+        response = self.client.post(self.article_url, self.missing_body,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required',
+                      response.content)
+
+    def test_all_missing_data(self):
+        """Test that a validates that all fields are not missing"""
+
+        self.missing_fields = {
+        }
+        response = self.client.post(self.article_url, self.missing_fields,
+                                    format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required',
+                      response.content)
+
     def test_user_can_update_article(self):
-        self.client.post(reverse('articles'), self.article_data, format="json")
+        """ Test that a logged in user can update an article"""
+        self.client.post(self.article_url, self.article_data, format="json")
         article = Article.objects.get()
         self.change_article = {'title': 'The love storry'}
-        res = self.client.put(
-            reverse('update', kwargs={'pk': article.id}),
+        response = self.client.put(
+            reverse('articles:update', kwargs={'art_slug': article.art_slug}),
             self.change_article,
             format='json')
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(b'article updated successfully',
+                      response.content)
 
     def test_user_can_delete_article(self):
-        self.client.post(reverse('articles'), self.article_data, format="json")
+        """Test that a logged in user can delete an article"""
+        self.client.post(self.article_url, self.article_data, format="json")
         article = Article.objects.get()
         response = self.client.delete(
-            reverse('delete', kwargs={'pk': article.id}),
+            reverse('articles:update', kwargs={'art_slug': article.art_slug}),
             format='json',
             follow=True)
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertIn('article deleted successfully',
+                      response.data['message'])
 
 
-class CreateCommentTestCase(MainTestConfig):
+class CreateCommentTestCase(TestCase):
     def setUp(self):
         self.comment_data = {'article': 1, 'user': 1, 'comment': 'Nice story '}
 
@@ -80,7 +212,7 @@ class ArticleTagsTestCase(TestCase):
         self.login_response = self.client.post(
             "api/users/login", self.login_data, format="json")
         # Replace the dummy token with self.login_response.data["Token"]
-        self.token = "eSknaojdIdlafesodoilkjIKLLKLJnjudalfdJndajfdaljfeESFdafjdalfjaofje"
+        self.token = "eSknaojdIdlafesodoilkjdalfdJndajfdaljfeESFdafjdalfjaofje"
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
 
     def test_user_can_create_tag(self):
