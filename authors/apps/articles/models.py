@@ -4,6 +4,7 @@ from django.db import models
 from taggit.managers import TaggableManager
 from authors.apps.authentication.models import (User)
 from django.utils.text import slugify
+from rest_framework.reverse import reverse as api_reverse
 
 
 class Tag(models.Model):
@@ -46,9 +47,30 @@ class Article(models.Model):
         """
         Add generated slug to save function.
         """
-        if not self.art_slug:
-            self.art_slug = self.generate_slug()
+        self.art_slug = self.generate_slug()
         super(Article, self).save(*args, **kwargs)
+
+    def get_share_uri(self, request=None):
+        """
+        This method allow users to share articles on Twitter, Facebook,
+         and Email.
+        """
+        article_share_url = "https://ah-infinites-staging.herokuapp.com/api/articles/{}".format(
+            self.art_slug
+        )
+
+        url_content = {
+            "twitter":
+                "https://twitter.com/intent/tweet?url = {}".format(
+                    article_share_url),
+            "facebook":
+                "https://www.facebook.com/sharer/sharer.php?u = {}".format(
+                    article_share_url),
+            "email":
+                "mailto:?subject = New Article Alert&body = {}".format(
+                    article_share_url)
+        }
+        return url_content
 
 
 class FavoriteArticle(models.Model):
