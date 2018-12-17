@@ -20,10 +20,6 @@ class ModelTestCase(TestCase):
         self.user = User(username=self.user_username)
         self.user.save()
 
-        # Define test variables for favorite article model
-        self.favorite_article = True
-        self.favorites = FavoriteArticle(favorite=self.favorite_article)
-
         # Define test variables for article comments model
         self.article_comment = "This is awesome..."
         self.comments = Comment(comment=self.article_comment)
@@ -61,13 +57,6 @@ class ModelTestCase(TestCase):
         first_count = Article.objects.count()
         self.article.save()
         last_count = Article.objects.count()
-        self.assertNotEqual(first_count, last_count)
-
-    def test_favorite_article_model_can_be_created(self):
-        """Test the model can create Favorite Article table"""
-        first_count = FavoriteArticle.objects.count()
-        self.favorites.save()
-        last_count = FavoriteArticle.objects.count()
         self.assertNotEqual(first_count, last_count)
 
     def test_comments_model_can_be_created(self):

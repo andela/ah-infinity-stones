@@ -7,24 +7,32 @@ from django.conf import settings
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.utils.encoding import force_text
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import authentication
 from rest_framework.views import APIView
 from django.utils.http import urlsafe_base64_decode
 from django.utils.http import urlsafe_base64_encode
 from datetime import datetime, timedelta
 from authors.apps.authentication.backends import JWTAuthentication
+from django.shortcuts import render
 from django.utils.encoding import force_bytes
+from django.views.generic import TemplateView
+from django.contrib.auth import user_logged_in
+from requests.exceptions import HTTPError
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from social_django.utils import load_strategy, load_backend
 from social_core.exceptions import MissingBackend
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
-from .models import User
-from rest_framework.permissions import (AllowAny, IsAuthenticatedOrReadOnly)
 
 from .renderers import UserJSONRenderer
 from .serializers import (LoginSerializer, RegistrationSerializer,
                           UserSerializer, SocialAuthSerializer,
                           ResetQuestSerializer)
+from social_core.exceptions import AuthAlreadyAssociated
+from .models import User
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 
 
 class RegistrationAPIView(APIView):
@@ -47,7 +55,7 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-        domain = '127.0.0.1:8000'
+        domain = '*'
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
         time = datetime.now()
@@ -70,7 +78,6 @@ class RegistrationAPIView(APIView):
                 'http://' + domain + '/api/user/activate/' + self.uid + '/' +
                 token + '/'
             })
-
         mail_subject = 'Activate your account.'
         to_email = user['email']
         from_email = 'infinitystones.team@gmail.com'
@@ -82,9 +89,13 @@ class RegistrationAPIView(APIView):
             ],
             html_message=message,
             fail_silently=False)
-        message = {'Message': '{} registered successfully, please check your\
-        mail to activate your account.'.format(
-            user['username']), "Token": token}
+        message = {
+            'Message':
+            '{} registered successfully, please check your\
+        mail to activate your account.'.format(user['username']),
+            "Token":
+            token
+        }
         serializer.save()
         return Response(message, status=status.HTTP_201_CREATED)
 
@@ -104,9 +115,9 @@ class ActivationView(APIView):
             if user.is_active is True:
                 return Response({'message': 'Activation link has expired'})
             else:
-                if user is not None and jwt.decode(token,
-                                                   settings.SECRET_KEY,
-                                                   algorithms='HS256')['email'] == user.email:
+                if user is not None and jwt.decode(
+                        token, settings.SECRET_KEY,
+                        algorithms='HS256')['email'] == user.email:
                     user.is_active = True
                     user.save()
                     # return redirect('home')
@@ -189,7 +200,7 @@ class SocialAuthAPIView(CreateAPIView):
             return Response({
                 "error": "Please enter a valid provider"
             },
-                status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             user = backend.do_auth(token, user=authenticated_user)
             # breakpoint()
@@ -219,8 +230,8 @@ class PasswordResetBymailAPIView(CreateAPIView):
             "iat": datetime.now(),
             "exp": datetime.utcnow() + timedelta(hours=24)
         },
-            settings.SECRET_KEY,
-            algorithm='HS256').decode()
+                           settings.SECRET_KEY,
+                           algorithm='HS256').decode()
 
         # format the email
         hosting = request.get_host()
@@ -278,4 +289,4 @@ class PasswordResetDoneAPIView(UpdateAPIView):
         return Response({
             "message": "Password successfully updated"
         },
-            status=status.HTTP_200_OK)
+                        status=status.HTTP_200_OK)

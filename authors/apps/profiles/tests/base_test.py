@@ -1,8 +1,8 @@
 from django.urls import reverse
 from rest_framework.test import APIClient
 from django.test import TestCase
-from authors.apps.authentication.models import User
 import json
+
 
 class BaseTestCase(TestCase):
     """
@@ -18,35 +18,38 @@ class BaseTestCase(TestCase):
         self.reg_url = reverse('authentication:register')
         self.profile_url = reverse('profiles:profile')
 
-        self.one_user = {"user":{
-            'email': 'leo@example.com',
-            'username': 'leon',
-            'password': 'leoN_$2300'
-        }}
+        self.one_user = {
+            "user": {
+                'email': 'leo@example.com',
+                'username': 'leon',
+                'password': 'leoN_$2300'
+            }
+        }
 
-        self.two_user = {"user":{
-            'email': 'eliza@example.com',
-            'username': 'eliza',
-            'password': 'elizA_$1400'
-        }}
+        self.two_user = {
+            "user": {
+                'email': 'eliza@example.com',
+                'username': 'eliza',
+                'password': 'elizA_$1400'
+            }
+        }
 
-        self.tri_user = {"user":{
-            'email': 'johnny@example.com',
-            'username': 'johnny',
-            'password': 'johnnY_$1000'
-        }}
+        self.tri_user = {
+            "user": {
+                'email': 'johnny@example.com',
+                'username': 'johnny',
+                'password': 'johnnY_$1000'
+            }
+        }
 
-        self.foo_user = {"user":{
-            'email': 'obama@example.com',
-            'username': 'obama',
-            'password': 'obamA_$4300'
-        }}
-
-
-        response = self.client.post(
-            self.reg_url,
-            self.tri_user,
-            format="json")
+        self.foo_user = {
+            "user": {
+                'email': 'obama@example.com',
+                'username': 'obama',
+                'password': 'obamA_$4300'
+            }
+        }
+        response = self.client.post(self.reg_url, self.tri_user, format="json")
         result = response.content
         result = json.loads(result.decode('utf-8'))
         self.token = result["user"]["Token"]
@@ -54,4 +57,3 @@ class BaseTestCase(TestCase):
 
     def test_registration(self):
         self.assertIn('johnny registered successfully', self.msg)
-
