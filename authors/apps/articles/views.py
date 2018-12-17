@@ -49,11 +49,6 @@ class ArticleListAPIView(ListAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
-# class ArticleDeleteAPIView(DestroyAPIView):
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-
-
 class CommentCreateViewAPIView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer

@@ -22,9 +22,13 @@ class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Article
+<<<<<<< HEAD
         fields = ("art_slug", "title", "description", "body", "read_time",
                   "tag", "user", "created_at", "updated_at")
         fields = ("id", "art_slug", "title", "description", "body", "read_time",
+=======
+        fields =("id", "art_slug", "title", "description", "body", "read_time",
+>>>>>>> configure the code to pep8 standards
                   "tag", "user", "created_at", "updated_at")
 
 
