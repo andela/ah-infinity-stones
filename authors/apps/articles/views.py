@@ -46,8 +46,12 @@ class ArticleListAPIView(ListAPIView):
     serializer_class = ArticleSerializer
 
     def get(self, request, slug):
-        """ Method for getting all articles """
         return Response(status=status.HTTP_200_OK)
+
+
+# class ArticleDeleteAPIView(DestroyAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
 
 
 class CommentCreateViewAPIView(generics.ListCreateAPIView):

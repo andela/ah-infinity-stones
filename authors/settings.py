@@ -50,7 +50,11 @@ INSTALLED_APPS = [
     'authors.apps.notifications',
     'social_django',
     'taggit',
+<<<<<<< HEAD
     'taggit_serializer',
+=======
+
+>>>>>>> Add slug functiopnality
 ]
 
 MIDDLEWARE = [
