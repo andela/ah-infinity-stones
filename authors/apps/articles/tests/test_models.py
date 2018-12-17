@@ -1,6 +1,6 @@
 from django.test import TestCase
 from authors.apps.articles.models import (
-    Article, FavoriteArticle, Comment, LikesDislike,
+    Article, FavoriteArticle, Comment, LikeDislike,
     ArticleRating, Tag, BookmarkedArticle, Report,
     Highlight, CommentHistory
 )
@@ -29,7 +29,6 @@ class ModelTestCase(TestCase):
 
         # Define test variables for article likes and dislikes model
         self.article_like = True
-        self.likes = LikesDislike(like=self.article_like)
 
         # Define test variables for Article Ratings model
         self.rate_id = 5
@@ -79,9 +78,12 @@ class ModelTestCase(TestCase):
 
     def test_article_likes_model_can_be_created(self):
         """Test the model can create Article likes table"""
-        first_count = LikesDislike.objects.count()
+        self.article = Article(title="title", user=self.user)
+        self.article.save()
+        self.likes = LikeDislike(user=self.user,article=self.article, like=self.article_like)
+        first_count = LikeDislike.objects.count()
         self.likes.save()
-        last_count = LikesDislike.objects.count()
+        last_count = LikeDislike.objects.count()
         self.assertNotEqual(first_count, last_count)
 
     def test_article_ratings_model_can_be_created(self):

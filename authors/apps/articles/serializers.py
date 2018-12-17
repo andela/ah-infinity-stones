@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from django.apps import apps
-from authors.apps.articles.models import Article, User, Tag, Comment
 from taggit_serializer.serializers import (TagListSerializerField)
 from authors.apps.profiles.serializers import ProfileSerializer
-
 Profile = apps.get_model('profiles', 'Profile')
+from authors.apps.articles.models import (
+    Article, User, Tag, Comment, LikeDislike)
+from rest_framework.validators import UniqueTogetherValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,3 +54,17 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ["article", "user", "comment"]
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    """ Serialize json to model and model to json"""
+
+    class Meta:
+        model = LikeDislike
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=LikeDislike.objects.all(),
+                fields=('article', 'user')
+            )
+        ]

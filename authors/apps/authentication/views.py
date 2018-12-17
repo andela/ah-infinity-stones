@@ -5,6 +5,8 @@ from rest_framework import status
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from django.conf import settings
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.http import JsonResponse
 from django.utils.encoding import force_text
 from rest_framework.views import APIView
 from django.utils.http import urlsafe_base64_decode
@@ -35,7 +37,7 @@ class RegistrationAPIView(APIView):
     def post(self, request):
         user = request.data.get('user', {})
         """
-        Generate and return a decoded token.
+        Register user and send activation email.
         """
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
@@ -82,14 +84,9 @@ class RegistrationAPIView(APIView):
             ],
             html_message=message,
             fail_silently=False)
-
-        message = {
-            'Message':
-            '{} registered successfully, please check your mail to activate your account.'
-            .format(user['username']),
-            "Token":
-            token
-        }
+        message = {'Message': '{} registered successfully, please check your\
+        mail to activate your account.'.format(
+            user['username']), "Token": token}
         serializer.save()
         return Response(message, status=status.HTTP_201_CREATED)
 
@@ -105,16 +102,13 @@ class ActivationView(APIView):
         """
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
-            print(uid)
             user = User.objects.get(username=uid)
-            print(user.email)
             if user.is_active is True:
                 return Response({'message': 'Activation link has expired'})
             else:
                 if user is not None and jwt.decode(token,
                                                    settings.SECRET_KEY,
-                                                   algorithms='HS256')['email']\
-                        == user.email:
+                                                   algorithms='HS256')['email'] == user.email:
                     user.is_active = True
                     user.save()
                     # return redirect('home')

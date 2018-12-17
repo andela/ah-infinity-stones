@@ -23,7 +23,9 @@ class CreateArticleTestCase(TestCase):
             }
         }
         self.article_data = {
+            'art_slug': 'The-war-storry',
             'title': 'The war storry',
+            'author': 1,
             'tag': ['js'],
             'description': 'Love is blind',
             'body': 'I really loved war until...',
@@ -49,8 +51,13 @@ class CreateArticleTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_user_can_get_all_articles(self):
-        """Test that a user can get all articles"""
+
+    def test_user_can_get_an_article(self):
+        self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
         response = self.client.get(self.article_url,)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

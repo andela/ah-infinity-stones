@@ -91,17 +91,17 @@ class CommentHistory(models.Model):
         return "{}".format(self.new_comment)
 
 
-class LikesDislike(models.Model):
-    """This class represents the Favorite Likes Dislike model"""
-    article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
+class LikeDislike(models.Model):
+    """ Like and dislike data model"""
+    class Meta:
+        # user can only like article once
+        unique_together = (('article', 'user'))
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
     like = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        """Returns a human readable representation of the model instance"""
-        return "{}".format(self.like)
 
 
 class ArticleRating(models.Model):
