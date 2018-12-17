@@ -14,11 +14,10 @@ Including another URLconf
 """
 from django.urls import include, path
 from django.contrib import admin
-from django.contrib.auth import login
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', include('authors.apps.articles.url')),
+    path('api/', include(('authors.apps.articles.url', 'articles'),
+                         namespace='articles')),
     path('admin/', admin.site.urls),
     path('api-auth/', include(
         'rest_framework.urls', namespace='rest_framework')),

@@ -1,53 +1,83 @@
+import jwt
+
 from rest_framework import status
 from django.test import TestCase
 from django.urls import reverse
+from django.conf import settings
+
 from .test_config import MainTestConfig
+from ..models import User
 from authors.apps.authentication.tests.test_setup import BaseSetUp
 from authors.apps.articles.models import (Article)
 
 
-class CreateArticleTestCase(MainTestConfig):
+class CreateArticleTestCase(TestCase):
     def setUp(self):
         self.base = BaseSetUp()
         self.client = self.base.client
+        self.user = {
+            'user': {
+                'username': 'remmy',
+                'email': 'remmy@test.com',
+                'password': '@Password123'
+            }
+        }
         self.article_data = {
+            'art_slug': 'The-war-storry',
             'title': 'The war storry',
             'author': 1,
-            'tag': [1],
+            'tag': ['js'],
             'description': 'Love is blind',
             'body': 'I really loved war until...',
             'read_time': 3
         }
-        self.token = "eSknaojdIdlafesodoilkjIKLLKLJnjudalfdJndajfdaljfeESFdafjdalfjaofje"
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+
+        response = self.client.post(
+            reverse('authentication:register'), self.user, format="json")
+        decoded = jwt.decode(
+            response.data['Token'], settings.SECRET_KEY, algorithm='HS256')
+        user = User.objects.get(email=decoded['email'])
+        user.is_active = True
+        self.token = response.data['Token']
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        user.save()
+        self.article_url = reverse('articles:articles')
 
     def test_post_article(self):
+
         response = self.client.post(
-            reverse('articles'), self.article_data, format="json")
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_user_can_get_an_article(self):
-        response = self.client.get(reverse('list', ))
+        response = self.client.get(self.article_url,)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_user_can_update_article(self):
-        self.client.post(reverse('articles'), self.article_data, format="json")
+        self.client.post(self.article_url, self.article_data, format="json")
         article = Article.objects.get()
         self.change_article = {'title': 'The love storry'}
-        res = self.client.put(
-            reverse('update', kwargs={'pk': article.id}),
+        response = self.client.put(
+            reverse('articles:update', kwargs={'art_slug': article.art_slug}),
             self.change_article,
             format='json')
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(b'article updated successfully',
+                      response.content)
 
     def test_user_can_delete_article(self):
-        self.client.post(reverse('articles'), self.article_data, format="json")
+        self.client.post(self.article_url, self.article_data, format="json")
         article = Article.objects.get()
         response = self.client.delete(
-            reverse('delete', kwargs={'pk': article.id}),
+            reverse('articles:update', kwargs={'art_slug': article.art_slug}),
             format='json',
             follow=True)
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertIn('article deleted successfully',
+                      response.data['message'])
 
 
 class CreateCommentTestCase(MainTestConfig):

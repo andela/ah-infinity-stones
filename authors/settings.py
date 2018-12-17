@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'authors.apps.articles',
     'authors.apps.notifications',
     'social_django',
+    'taggit',
+
 ]
 
 MIDDLEWARE = [

@@ -56,9 +56,17 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
+<<<<<<< HEAD
         domain = '127.0.0.1:8000'
         self.uid = urlsafe_base64_encode(
             force_bytes(user['username'])).decode("utf-8")
+=======
+        # The create serializer, validate serializer, save serializer pattern
+        # below is common and you will see it a lot throughout this course and
+        # your own work later on. Get familiar with it.
+        domain = '127.0.0.1:8000'
+        self.uid = urlsafe_base64_encode(force_bytes(user['username'])).decode("utf-8")
+>>>>>>> feat(Article): Implement Article CRUD
         time = datetime.now()
         time = datetime.strftime(time, '%d-%B-%Y %H:%M')
         message = render_to_string('email_confirm.html', {
@@ -132,10 +140,26 @@ class LoginAPIView(APIView):
         # handles everything we need.
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
+<<<<<<< HEAD
         email = user['email']
         return Response({"Message": "Login successful, welcome {} "
                          .format(email)},
                         status=status.HTTP_200_OK)
+=======
+        return JsonResponse({"message": "login success, welcome "+user["email"]},
+                            status=status.HTTP_200_OK)
+
+
+class SocialAuthAPIView(APIView):
+    """Allow user to login via Google, Twitter and Facebook"""
+    pass
+
+
+class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = UserSerializer
+>>>>>>> feat(Article): Implement Article CRUD
 
     def retrieve(self, request, *args, **kwargs):
         # There is nothing to validate or save here. Instead, we just want the
