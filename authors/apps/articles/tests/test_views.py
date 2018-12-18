@@ -26,9 +26,10 @@ class CreateArticleTestCase(TestCase):
             }
         }
         self.article_data = {
+            'art_slug': 'The-war-storry',
             'title': 'The war storry',
             'author': 1,
-            'tag': [1],
+            'tag': ['js'],
             'description': 'Love is blind',
             'body': 'I really loved war until...',
             'read_time': 3
@@ -39,19 +40,28 @@ class CreateArticleTestCase(TestCase):
         decoded = jwt.decode(
             res.data['Token'], settings.SECRET_KEY, algorithm='HS256')
         user = User.objects.get(email=decoded['email'])
-        pk = user.id
-        # url = 'http://127.0.0.1:8000/api/user/activate/{pk}/{token}'.format(
-        #     pk=pk, token=res.data['Token'])
-        user.is_active = 't'
+        user.is_active = True
+        self.token = res.data['Token']
+
+        # reverse('authentication:activate', kwargs={"token": res.data['Token']})
         user.save()
+        # self.token = res.data["Token"]
+        # import pdb; pdb.set_trace()
+
         self.article_url = reverse('articles:articles')
 
     def test_post_article(self):
+
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
         response = self.client.post(
             self.article_url,
             self.article_data,
-            format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            format="json"
+        )
+        # import pdb; pdb.set_trace()
+        # print(response.data)
+        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # print(response.content['message'])
         self.assertIn(b'article created successfully',
                       response.content)
 
