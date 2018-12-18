@@ -1,9 +1,7 @@
 from __future__ import unicode_literals
 import jwt
 from rest_framework import status
-from rest_framework.generics import (
-    CreateAPIView
-)
+from rest_framework.generics import (CreateAPIView)
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -11,7 +9,6 @@ from django.utils.encoding import force_text
 from rest_framework import authentication
 from rest_framework.views import APIView
 from django.utils.http import urlsafe_base64_decode
-from django.utils.http import urlsafe_base64_encode
 from datetime import datetime, timedelta
 from authors.apps.authentication.backends import JWTAuthentication
 from django.shortcuts import render
@@ -20,31 +17,21 @@ from django.views.generic import TemplateView
 from django.contrib.auth import user_logged_in
 from requests.exceptions import HTTPError
 from django.core.mail import send_mail
+from rest_framework.generics import RetrieveUpdateAPIView
 from django.template.loader import render_to_string
 from social_django.utils import load_strategy, load_backend
 from social_core.exceptions import MissingBackend
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import AuthAlreadyAssociated
 from .models import User
-from rest_framework.permissions import (
-    IsAuthenticated, IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 
 from .renderers import UserJSONRenderer
-from .serializers import (
-<<<<<<< HEAD
-    LoginSerializer, RegistrationSerializer,
-    UserSerializer, SocialAuthSerializer
-)
-=======
-    LoginSerializer, RegistrationSerializer, UserSerializer, ResetQuestSerializer
-)
-from .models import User
-from rest_framework.generics import (RetrieveUpdateDestroyAPIView,
-    CreateAPIView,
-    UpdateAPIView)
-from django.core.mail import send_mail
+from .serializers import (LoginSerializer, RegistrationSerializer,
+                          UserSerializer, SocialAuthSerializer,
+                          ResetQuestSerializer)
 from ...settings import EMAIL_HOST_USER
->>>>>>> feature(resetPassword): User able to reset password via email
 
 
 class RegistrationAPIView(APIView):
@@ -63,51 +50,65 @@ class RegistrationAPIView(APIView):
         date_time = datetime.now() + timedelta(days=2)
         payload = {
             'email': user['email'],
-            'exp': int(date_time .strftime('%s'))
+            'exp': int(date_time.strftime('%s'))
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-<<<<<<< HEAD
         domain = '127.0.0.1:8000'
-        self.uid = urlsafe_base64_encode(
-            force_bytes(user['username'])).decode("utf-8")
-=======
+        self.uid = urlsafe_base64_encode(force_bytes(
+            user['username'])).decode("utf-8")
         # The create serializer, validate serializer, save serializer pattern
         # below is common and you will see it a lot throughout this course and
         # your own work later on. Get familiar with it.
         domain = '127.0.0.1:8000'
-        self.uid = urlsafe_base64_encode(force_bytes(user['username'])).decode("utf-8")
->>>>>>> feat(Article): Implement Article CRUD
+        self.uid = urlsafe_base64_encode(force_bytes(
+            user['username'])).decode("utf-8")
         time = datetime.now()
         time = datetime.strftime(time, '%d-%B-%Y %H:%M')
-        message = render_to_string('email_confirm.html', {
-            'user': user,
-            'domain': domain,
-            'uid': self.uid,
-            'token': token,
-            'username': user['username'],
-            'time': time,
-            'link': 'http://' + domain + '/api/user/activate/' +
-                    self.uid + '/' + token + '/'})
+        message = render_to_string(
+            'email_confirm.html', {
+                'user':
+                user,
+                'domain':
+                domain,
+                'uid':
+                self.uid,
+                'token':
+                token,
+                'username':
+                user['username'],
+                'time':
+                time,
+                'link':
+                'http://' + domain + '/api/user/activate/' + self.uid + '/' +
+                token + '/'
+            })
         mail_subject = 'Activate your account.'
         to_email = user['email']
         from_email = 'infinitystones.team@gmail.com'
         send_mail(
             mail_subject,
             'Verify your Account',
-            from_email,
-            [to_email, ],
-            html_message=message, fail_silently=False)
+            from_email, [
+                to_email,
+            ],
+            html_message=message,
+            fail_silently=False)
 
-        message = {'Message': '{} registered successfully, please check your mail to activate your account.'.format(
-            user['username']), "Token": token}
+        message = {
+            'Message':
+            '{} registered successfully, please check your mail to activate your account.'
+            .format(user['username']),
+            "Token":
+            token
+        }
         serializer.save()
         return Response(message, status=status.HTTP_201_CREATED)
 
 
 class ActivationView(APIView):
     """Allow a registered user to activate their account"""
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
 
     def get(self, request, uidb64, token):
         """
@@ -132,15 +133,15 @@ class ActivationView(APIView):
                     Now you can log into your account.")
                 else:
                     return Response('Activation link is invalid!')
-        except(TypeError, ValueError, OverflowError):
+        except (TypeError, ValueError, OverflowError):
             user = None
-            return Response("There is no such user."+str(user))
+            return Response("There is no such user." + str(user))
 
 
 class LoginAPIView(APIView):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    authentication_class = (JWTAuthentication,)
-    renderer_classes = (UserJSONRenderer,)
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    authentication_class = (JWTAuthentication, )
+    renderer_classes = (UserJSONRenderer, )
     serializer_class = LoginSerializer
 
     def post(self, request):
@@ -151,14 +152,17 @@ class LoginAPIView(APIView):
         # handles everything we need.
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
-<<<<<<< HEAD
         email = user['email']
-        return Response({"Message": "Login successful, welcome {} "
-                         .format(email)},
-                        status=status.HTTP_200_OK)
-=======
-        return JsonResponse({"message": "login success, welcome "+user["email"]},
-                            status=status.HTTP_200_OK)
+        return Response(
+            {
+                "Message": "Login successful, welcome {} ".format(email)
+            },
+            status=status.HTTP_200_OK)
+        return JsonResponse(
+            {
+                "message": "login success, welcome " + user["email"]
+            },
+            status=status.HTTP_200_OK)
 
 
 class SocialAuthAPIView(APIView):
@@ -170,7 +174,6 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated, )
     renderer_classes = (UserJSONRenderer, )
     serializer_class = UserSerializer
->>>>>>> feat(Article): Implement Article CRUD
 
     def retrieve(self, request, *args, **kwargs):
         # There is nothing to validate or save here. Instead, we just want the
@@ -182,11 +185,10 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 class SocialAuthAPIView(CreateAPIView):
     """This class allows users to login through Social sites such as
      Google, Twitter, and Facebook"""
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
     serializer_class = SocialAuthSerializer
-    renderer_classes = (UserJSONRenderer,)
+    renderer_classes = (UserJSONRenderer, )
 
-<<<<<<< HEAD
     def create(self, request, *args, **kwargs):
         """Get social auth provider and token and generates the user token based on the user
          email"""
@@ -206,22 +208,23 @@ class SocialAuthAPIView(CreateAPIView):
                 if "access_token_secret" in request.data:
                     token = {
                         'oauth_token': request.data['access_token'],
-                        'oauth_token_secret': request.data['access_token_secret']
+                        'oauth_token_secret':
+                        request.data['access_token_secret']
                     }
                 else:
                     return Response(
                         {
-                            "error": "Please provide your secret access token"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                            "error": "Please provide your secret access token"
+                        },
+                        status=status.HTTP_400_BAD_REQUEST)
             elif isinstance(backend, BaseOAuth2):
                 # Get access_token for providers using BaseOAuth2
                 token = serializer.data.get("access_token")
         except MissingBackend:
-            return Response(
-                {
-                    "error": "Please enter a valid provider"},
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "error": "Please enter a valid provider"
+            },
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             user = backend.do_auth(token, user=authenticated_user)
 
@@ -234,10 +237,8 @@ class SocialAuthAPIView(CreateAPIView):
         serializer = UserSerializer(user)
         serialized_data = serializer.data
         serialized_data["token"] = jwt_auth.generate_token(
-            serialized_data["email"], serialized_data["username"]
-        )
+            serialized_data["email"], serialized_data["username"])
         return Response(serialized_data, status=status.HTTP_200_OK)
-=======
         # Here is that serialize, validate, save pattern we talked about
         # before.
         serializer = self.serializer_class(
@@ -255,7 +256,6 @@ class PasswordResetBymailAPIView(CreateAPIView):
     def post(self, request):
         user_name = request.data['user']
         serializer = self.serializer_class.validate_email_data(data=user_name)
-
 
         # format the email
         hosting = request.get_host()
@@ -283,4 +283,3 @@ class PasswordResetBymailAPIView(CreateAPIView):
                 "message": "Please check your email for password reset link"
             },
             status=status.HTTP_200_OK)
->>>>>>> feature(resetPassword): User able to reset password via email

@@ -6,13 +6,12 @@ from .views import LoginAPIView, RegistrationAPIView, \
 
 urlpatterns = [
     path('users/', RegistrationAPIView.as_view(), name='register'),
-    path('users/login/', LoginAPIView.as_view()),
     path('users/login/', LoginAPIView.as_view(), name="login"),
     path('login/oauth/', SocialAuthAPIView.as_view(), name="social_auth"),
-    re_path(r'^user/activate/(?P<uidb64>[0-9A-Za-z_\-]+)/
-    (?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/
-    ',
+    re_path(r'^user/activate/(?P<uidb64>[0-9A-Za-z_\-]+)/\
+    (?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/',
             ActivationView.as_view(), name='activate'),
     path('socialAuth/', SocialAuthAPIView.as_view()),
     path('user/password-reset/', PasswordResetBymailAPIView.as_view()),
+
 ]

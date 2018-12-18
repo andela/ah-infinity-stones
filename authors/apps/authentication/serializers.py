@@ -1,5 +1,4 @@
 from django.contrib.auth import authenticate
-
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from .models import User
@@ -182,13 +181,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SocialAuthSerializer(serializers.Serializer):
-    """ This class serializes keys and key_secrets google, twitter and \
-    facebook. """
+    """This is a serializer class for social sites keys and secret keys."""
     provider = serializers.CharField(max_length=255, required=True)
     access_token = serializers.CharField(
         max_length=2048, required=True, trim_whitespace=True)
     access_token_secret = serializers.CharField(
         max_length=2048, allow_null=True, default=None, trim_whitespace=True)
+
+
 class ResetQuestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

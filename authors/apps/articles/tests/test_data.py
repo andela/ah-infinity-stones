@@ -1,5 +1,5 @@
-from ..models import User, Tag, Comment, Article
 from ..models import User, Tag, Article
+
 
 
 def generate_test_data():

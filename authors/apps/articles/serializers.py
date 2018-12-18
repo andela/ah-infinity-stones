@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from authors.apps.articles.models import Article, User, Tag, Comment
-from taggit_serializer.serializers import TagListSerializerField
+from authors.apps.articles.models import Article, User, Tag, Comment, FavoriteArticle
+from taggit_serializer.serializers import (TagListSerializerField)
+from rest_framework.validators import UniqueTogetherValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,14 +23,11 @@ class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Article
-<<<<<<< HEAD
-        fields = ("art_slug", "title", "description", "body", "read_time",
-                  "tag", "user", "created_at", "updated_at")
-        fields = ("id", "art_slug", "title", "description", "body", "read_time",
-=======
-        fields =("id", "art_slug", "title", "description", "body", "read_time",
->>>>>>> configure the code to pep8 standards
-                  "tag", "user", "created_at", "updated_at")
+        fields = ("id", "art_slug", "title", "description", "body",
+                  "read_time", "tag", "user", "created_at", "updated_at")
+
+  
+
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -39,3 +37,14 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ["article", "user", "comment"]
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """ Serialize json to model and model to json"""
+
+    class Meta:
+        model = FavoriteArticle
+        fields = ('article', 'user')
+
+    def create(self, validated_data):
+        return FavoriteArticle.objects.create(**validated_data)

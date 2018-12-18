@@ -2,7 +2,7 @@ import uuid
 
 from django.db import models
 from taggit.managers import TaggableManager
-from authors.apps.authentication.models import (User)
+from authors.apps.authentication.models import User
 from django.utils.text import slugify
 
 
@@ -52,16 +52,17 @@ class Article(models.Model):
 
 class FavoriteArticle(models.Model):
     """This class represents the Favorite Articles model"""
-    article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
-    favorite = models.BooleanField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # favorite = models.BooleanField()
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    # article = models.ForeignKey(
+    #     Article, related_name='favorites', on_delete=models.CASCADE)
 
     def __str__(self):
         """Returns a human readable representation of the model instance"""
-        return "{}".format(self.favorite)
-
+        return "{}".format(self.article)
 
 class Comment(models.Model):
     """This class represents the Favorite Comment model"""
