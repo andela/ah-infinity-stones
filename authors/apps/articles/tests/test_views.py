@@ -1,5 +1,4 @@
-
-import jwt
+giimport jwt
 
 from rest_framework import status
 from django.test import TestCase
@@ -42,19 +41,17 @@ class CreateArticleTestCase(TestCase):
         self.token = response.data['Token']
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
         user.save()
+
         self.article_url = reverse('articles:articles')
 
     def test_post_article(self):
 
         response = self.client.post(
-            self.article_url,
-            self.article_data,
-            format="json"
-        )
+            self.article_url, self.article_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_user_can_get_an_article(self):
-        response = self.client.get(self.article_url,)
+        response = self.client.get(self.article_url, )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_user_can_update_article(self):
@@ -66,8 +63,7 @@ class CreateArticleTestCase(TestCase):
             self.change_article,
             format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn(b'article updated successfully',
-                      response.content)
+        self.assertIn(b'article updated successfully', response.content)
 
     def test_user_can_delete_article(self):
         self.client.post(self.article_url, self.article_data, format="json")
@@ -77,8 +73,7 @@ class CreateArticleTestCase(TestCase):
             format='json',
             follow=True)
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertIn('article deleted successfully',
-                      response.data['message'])
+        self.assertIn('article deleted successfully', response.data['message'])
 
 
 class CreateCommentTestCase(MainTestConfig):
