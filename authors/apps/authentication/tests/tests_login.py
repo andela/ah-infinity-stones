@@ -41,7 +41,9 @@ class UserTestCase(TestCase):
         """This function tests whether a registered user can login"""
         # Test user registration
         self.assertEqual(self.resp.status_code, status.HTTP_201_CREATED)
-        self.assertIn("remmy registered successfully", self.resp.data["Message"])
+        self.assertEqual(self.resp.data["Message"],
+                         'remmy registered successfully, please check your\
+        mail to activate your account.')
 
         # Login response
         self.response = self.client.post(
