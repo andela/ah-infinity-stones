@@ -50,7 +50,6 @@ class UserTestCase(TestCase):
             "email": "remmy@test.com",
             "password": "Password123"
         }}
-
         response = self.client.post(
             self.reg_url,
             self.empty_username,

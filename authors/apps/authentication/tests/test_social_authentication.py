@@ -6,6 +6,7 @@ import json
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
+from django.urls import reverse
 
 
 class UserTestCase(TestCase):
@@ -16,117 +17,56 @@ class UserTestCase(TestCase):
     def setUp(self):
         """This function defines variables to be used throughout the class"""
         self.client = APIClient()
-        self.google_key = os.getenv('GOOGLE_KEY')
-        self.google_secret = os.getenv('GOOGLE_SECRET')
-        self.facebook_key = os.getenv('FACEBOOK_KEY')
-        self.facebook_secret = os.getenv('FACEBOOK_SECRET')
-        self.twitter_key = os.getenv('TWITTER_KEY')
-        self.twitter_secret = os.getenv('TWITTER_SECRET')
+        self.social_oauth_url = reverse('authentication:social_auth')
+        self.oauth2_access_token = "ya29.Glt0BpfMY3SDBrh4WZ5sL-N8kOhnNfTN8Av1E6dm9l4ZH9dB_7ba-wOZ7ACl84qo-kXIgivPK_WiBUh1CL8DddlMaIJPzQ0Nyx4_dtMF_1TywpmZEyLXuVIJQh8E"
+        self.oauth1_access_token = "1076314754-Q285n4m9KVoZPBs4PNCUIH8I49ZlHRAnoxEYT95 "
+        self.oauth1_access_token_secret = "UX6IHUVOEvmgP1NpxjmzProrthOuUjy3qMwVWYfkCIF0o"
 
-    def test_google_login_no_access_key(self):
+    def test_social_login_with_no_access_token(self):
         """This method test that a user cannot login via Google
         if there's no access_key
         """
+        data = {"provider": "facebook"}
+        response = self.client.post(
+            self.social_oauth_url, data=data, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("This field is required.",
+                      response.data["errors"]["access_token"])
 
-        data = {"provider": "google",
-                "access_key_secret": self.google_secret}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Google access_key is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
+    def test_social_login_with_valid_access_token(self):
+        """This method test that a user can login through social sites using oauth2"""
+        data = {
+            "provider": "google-oauth2",
+            "access_token": self.oauth2_access_token
+        }
+        response = self.client.post(
+            self.social_oauth_url, data=data, format="json"
+        )
+        self.assertEqual(response.status_code, 200)
 
-    def test_google_login_no_access_key_secret(self):
-        """This method test that a user cannot login via Google
-        if there's no access_key_secret
-        """
-        data = {"provider": "google",
-                "access_key": self.google_key}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Google access_key_secret is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
+    def test_social_login_with_invalid_provider(self):
+        """ Test for invalid provider provider """
+        data = {"provider": "000promaster",
+                "access_token": self.oauth2_access_token}
+        response = self.client.post(self.social_oauth_url, data=data)
+        self.assertEqual(response.status_code, 400)
 
-    def test_google_login(self):
-        """This method test that a user can login through google"""
-        data = {"provider": "google",
-                "access_key": self.google_key,
-                "access_key_secret": self.google_secret}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "User logged in successfully.")
-        self.assertNotEqual(json.loads(response.data)["token"], None)
-
-    def test_twitter_login_no_access_key(self):
+    def test_social_login_for_oauth1_with_no_access_token_secret(self):
         """This method test that a user cannot login via Twitter
-        if there's no access_key
+        if there's no access token secret
         """
 
         data = {"provider": "twitter",
-                "access_key_secret": self.twitter_secret}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Twitter access_key is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
+                "access_token": self.oauth1_access_token}
+        response = self.client.post(self.social_oauth_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b"Please provide your secret access token",
+                      response.content)
 
-    def test_twitter_login_no_access_key_secret(self):
-        """This method test that a user cannot login via Twitter
-        if there's no access_key_secret
-        """
-
+    def test_social_login_for_oauth2_with_valid_credentials(self):
+        """This method test that a user can login through social sites using oauth2"""
         data = {"provider": "twitter",
-                "access_key": self.twitter_key}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Twitter access_key_secret is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
-
-    def test_twitter_login(self):
-        """This method test that a user can login through twitter"""
-        data = {"provider": "twitter",
-                "access_key": self.twitter_key,
-                "access_key_secret": self.twitter_secret}
-        response = self.client.post('api/socialAuth', data=data)
+                "access_token": self.oauth1_access_token,
+                "access_token_secret": self.oauth1_access_token_secret}
+        response = self.client.post(self.social_oauth_url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "User logged in successfully.")
-        self.assertNotEqual(json.loads(response.data)["token"], None)
-
-    def test_facebook_login_no_access_key(self):
-        """This method test that a user cannot login via Facebook
-        if there's no access_key
-        """
-        data = {"provider": "facebook",
-                "access_key_secret": self.facebook_secret}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Facebook access_key is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
-
-    def test_facebook_login_no_access_key_secret(self):
-        """This method test that a user cannot login via Facebook
-        if there's no access_key_secret
-        """
-        data = {"provider": "facebook",
-                "access_key": self.facebook_key}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "Facebook access_key_secret is missing")
-        self.assertEqual(json.loads(response.data)["token"], None)
-
-    def test_facebook_login(self):
-        """This method test that a user can login through Facebook"""
-        data = {"provider": "facebook",
-                "access_key": self.facebook_key,
-                "access_key_secret": self.facebook_secret}
-        response = self.client.post('api/socialAuth', data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json.loads(response.data)["message"],
-                         "User logged in successfully.")
-        self.assertNotEqual(json.loads(response.data)["token"], None)

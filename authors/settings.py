@@ -188,7 +188,7 @@ SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('FACEBOOK_KEY', '')
 SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FACEBOOK_SECRET_KEY', '')
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-    'fields': 'id, name, email',
+    'fields': 'id, name, email'
 }
 FACEBOOK_EXTENDED_PERMISSIONS = ['email']
 SOCIAL_AUTH_FACEBOOK_API_VERSION = '3.2'

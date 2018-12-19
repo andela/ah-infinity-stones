@@ -1,8 +1,8 @@
 import jwt
-from django.conf import settings
-from rest_framework import authentication
-from rest_framework.exceptions import AuthenticationFailed
 from datetime import datetime, timedelta
+from django.conf import settings
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework import authentication
 from .models import User
 
 
@@ -19,9 +19,11 @@ class JWTAuthentication(authentication.BaseAuthentication):
             return None
         # Try to decode the token
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithm='HS256')
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithm='HS256')
         except:
-            raise AuthenticationFailed("Your token is invalid")
+            raise AuthenticationFailed("Your token is invalid. ")
+
         # Get user credentials for the user owing the token
         try:
             user = User.objects.get(email=payload["email"])

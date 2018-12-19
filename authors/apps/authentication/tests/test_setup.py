@@ -11,7 +11,7 @@ class BaseSetUp(TestCase):
         self.reg_data = {'user': {
             'username': 'remmy',
             'email': 'remmy@test.com',
-            'password': '@Password123'
+            'password': 'Password@123'
         }}
         # register a user
         self.client.post(
