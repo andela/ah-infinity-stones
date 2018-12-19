@@ -4,6 +4,7 @@ from taggit.managers import TaggableManager
 from authors.apps.authentication.models import (User)
 from django.utils.text import slugify
 from rest_framework.reverse import reverse as api_reverse
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Tag(models.Model):
@@ -25,6 +26,8 @@ class Article(models.Model):
     tag = TaggableManager(blank=True)
     description = models.CharField(max_length=250, null=False, default="")
     body = models.TextField(null=False)
+    rating_average = models.DecimalField(
+        max_digits=3, decimal_places=2, blank=True, null=True)
     read_time = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -124,10 +127,16 @@ class LikeDislike(models.Model):
 
 
 class ArticleRating(models.Model):
-    """This class represents the Favorite Article Rating model"""
-    article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
-    rating = models.IntegerField(null=False)
+    """This class represents the Article Rating model"""
+    art_slug = models.ForeignKey(Article, to_field="art_slug",
+                                 db_column="art_slug",
+                                 on_delete=models.CASCADE)
+    username = models.ForeignKey(User, to_field="username",
+                                 db_column="username",
+                                 on_delete=models.CASCADE)
+    # rating is from 1 to 5
+    rating = models.IntegerField(validators=[MinValueValidator(1),
+                                 MaxValueValidator(5)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

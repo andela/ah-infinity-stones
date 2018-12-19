@@ -29,7 +29,6 @@ class ModelTestCase(TestCase):
 
         # Define test variables for Article Ratings model
         self.rate_id = 5
-        self.article_ratings = ArticleRating(rating=self.rate_id)
 
         # Define test variables Article Tags model
         self.tag_name = "Love"
@@ -78,7 +77,14 @@ class ModelTestCase(TestCase):
 
     def test_article_ratings_model_can_be_created(self):
         """Test the model can create Article Rating table"""
+        self.article = Article(title="title", art_slug="how-to-make-it-rain",
+                               user=self.user)
+        self.article.save()
+        self.article_ratings = ArticleRating(username=self.user,
+                                             art_slug=self.article,
+                                             rating=self.rate_id,)
         first_count = ArticleRating.objects.count()
+
         self.article_ratings.save()
         last_count = ArticleRating.objects.count()
         self.assertNotEqual(first_count, last_count)

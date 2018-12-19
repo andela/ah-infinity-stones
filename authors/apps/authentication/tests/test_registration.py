@@ -10,11 +10,6 @@ class UserTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.base = BaseSetUp()
-
-        self.login_data = {
-            "username": "remmy",
-            "password": "hgfhdbfsjhb"
-        }
         self.reg_url = reverse('authentication:register')
 
     def test_register_user_successfully(self):
