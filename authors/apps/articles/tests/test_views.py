@@ -42,6 +42,7 @@ class CreateArticleTestCase(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
         user.save()
         self.article_url = reverse('articles:articles')
+        self.filter_url =reverse('articles:search')
 
     def test_post_article(self):
         """Test that a logged in user can post an article"""
@@ -366,3 +367,42 @@ class ArticleFavoriteTestCase(TestCase):
         response = self.client.post(
             "api/articles/favorites", self.favorite, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class ArticleSearchTest(CreateArticleTestCase):
+    def test_user_can_filter_article_by_author(self):
+        """ Test user is able to filter articles by author name"""
+        # post one article
+        self.client.post(self.article_url, self.article_data, format="json")
+        self.article_data_2 = {
+            'title': 'How to train your mind',
+            'author': 1,
+            'tag': ['philosophy'],
+            'description': 'How can your mind train itself?',
+            'body': 'Its actually possible, your mind is not you'
+                    'so basically its you training the mind...',
+            'read_time': 3
+        }
+        author = self.user['user']['username']
+        # post a second article
+        self.client.post(self.article_url, self.article_data, format="json")
+        response = self.client.get(
+            self.filter_url + '?author={}'.format(author), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_user_can_search_article(self):
+        """ Test user can search articles by keywords"""
+        self.client.post(self.article_url, self.article_data, format="json")
+        self.article_data_2 = {
+            'title': 'How to train your mind',
+            'author': 1,
+            'tag': ['philosophy'],
+            'description': 'How can your mind train itself?',
+            'body': 'Its actually possible, your mind is not you'
+                    'so basically its you training the mind...',
+            'read_time': 3
+        }
+        # post a second article
+        self.client.post(self.article_url, self.article_data, format="json")
+        response = self.client.get(self.filter_url+ '?q=mind', format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

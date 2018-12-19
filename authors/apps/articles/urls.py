@@ -7,7 +7,8 @@ from .views import (
     CommentCreateViewAPIView,
     CommentListAPIView,
     CommentUpdateView,
-    ArticleLikeDislikeView)
+    ArticleLikeDislikeView,
+    SearchArticleView)
 
 
 urlpatterns = [
@@ -17,6 +18,7 @@ urlpatterns = [
     path(
         'articles/<art_slug>/like-dislike', ArticleLikeDislikeView.as_view(),
         name='like_article'),
+    path('articles/search/', SearchArticleView.as_view(), name='search'),
     path('comment/', CommentCreateViewAPIView.as_view(), name='comment'),
     path('comment/', CommentListAPIView.as_view(), name='all_comments'),
     path(

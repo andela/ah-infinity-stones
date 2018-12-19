@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView, ListAPIView,)
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (AllowAny, IsAuthenticated)
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -74,6 +74,45 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
         except Article.DoesNotExist:
             return Response({"message": "Article does not exist"},
                             status=status.HTTP_404_NOT_FOUND)
+
+
+class SearchArticleView(ListAPIView):
+    permission_classes = (AllowAny, )
+    serializer_class = ArticleSerializer
+
+    def get(self, request):
+        search_params = request.query_params
+        query_set = Article.objects.all()
+
+        author = search_params.get('author', "")
+        title = search_params.get('title', "")
+        tag = search_params.get('tag', "")
+        keywords = search_params.get('q', "")
+        # filter based on the specific filter
+        if author:
+            query_set = query_set.filter(user__username=author)
+        elif title:
+            query_set = query_set.filter(title=title)
+        elif tag:
+            query_set = query_set.filter(tag__name=tag)
+        elif keywords:
+            # split the list of comma separated keywords
+            words = str(keywords).split(',')
+            final_queryset = ''
+            for word in words:
+                # filter titles based on the keyword(s) passed and
+                # append them to final_queryset
+                final_queryset = query_set.filter(title__icontains=word)
+            query_set = final_queryset
+
+        serializer = self.serializer_class(query_set, many=True)
+        return_data = serializer.data
+        if len(return_data) > 0:
+            return Response({"Your search results": return_data},
+                            status.HTTP_200_OK
+                            )
+        return Response({"Message": "Your search query did not match"
+                         " anything in the database"})
 
 
 class ArticleListAPIView(ListAPIView):

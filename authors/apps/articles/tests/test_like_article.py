@@ -37,8 +37,8 @@ class LikeDislike(TestCase):
             "body": "This is how we do it",
             "read_time": 3
         }
-        self.client.post(self.article_url, self.article_data, format="json")
-        self.slug = 'doing-it'
+        self.article = self.client.post(self.article_url, self.article_data, format="json")
+        self.slug = self.article.data['art_slug']
         self.like_url = reverse(
             'articles:like_article', kwargs={'art_slug': self.slug})
         self.like = {'like': 'True'}
