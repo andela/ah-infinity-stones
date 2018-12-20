@@ -1,7 +1,16 @@
+import jwt
+from datetime import datetime, timedelta
+
+from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.db import models
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 
 
 class UserManager(BaseUserManager):
@@ -25,24 +34,31 @@ class UserManager(BaseUserManager):
         user = self.model(username=username, email=self.normalize_email(email))
         user.set_password(password)
         user.save()
+
+        domain = '127.0.0.1:8000'
+        self.uid = urlsafe_base64_encode(force_bytes(user.username)).decode("utf-8")
+        token = user.token()
+        time = datetime.now()
+        time = datetime.strftime(time, '%d-%B-%Y %H:%M')
         return user
 
     def create_superuser(self, username, email, password):
-        """
-        Create and return a `User` with superuser powers.
+      """
+      Create and return a `User` with superuser powers.
 
-        Superuser powers means that this use is an admin that can do anything
-        they want.
-        """
-        if password is None:
-            raise TypeError('Superusers must have a password.')
+      Superuser powers means that this use is an admin that can do anything
+      they want.
+      """
+      if password is None:
+          raise TypeError('Superusers must have a password.')
 
-        user = self.create_user(username, email, password)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save()
+      user = self.create_user(username, email, password)
+      user.is_superuser = True
+      user.is_staff = True
+      user.is_active = True
+      user.save()
 
-        return user
+      return user
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -103,12 +119,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def get_full_name(self):
-        """
-        This method is required by Django for things like handling emails.
-        Typically, this would be the user's first and last name. Since we do
-        not store the user's real name, we return their username instead.
-        """
-        return self.username
+      """
+      This method is required by Django for things like handling emails.
+      Typically, this would be the user's first and last name. Since we do
+      not store the user's real name, we return their username instead.
+      """
+      return self.username
 
     def get_short_name(self):
         """
@@ -117,3 +133,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         the user's real name, we return their username instead.
         """
         return self.username
+
+    def token(self):
+        """
+        This method creates a token for a user who registers or logins successfully, and
+        has an expiry date set to 24hrs from creation.
+        """
+
+        dt = datetime.now() + timedelta(days=1)
+
+        login_data = {
+            "id": self.id,
+            "username": self.username,
+            "exp": dt
+        }
+        return jwt.encode(login_data, settings.SECRET_KEY, algorithm='HS256').decode('utf-8')
