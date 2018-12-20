@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import jwt
 from rest_framework import status
 from rest_framework.generics import (
-    CreateAPIView
+    CreateAPIView, RetrieveAPIView, ListCreateAPIView, GenericAPIView
 )
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -36,17 +36,17 @@ from .serializers import (
 )
 
 
-class RegistrationAPIView(APIView):
+class RegistrationAPIView(CreateAPIView):
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
     def post(self, request):
+        """
+        Create account with AH
+        """
         user = request.data.get('user', {})
-        """
-        Generate and return a decoded token.
-        """
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         date_time = datetime.now() + timedelta(days=2)
@@ -80,19 +80,20 @@ class RegistrationAPIView(APIView):
             [to_email, ],
             html_message=message, fail_silently=False)
 
-        message = {'Message': '{} registered successfully, please check your mail to activate your account.'.format(
+        message = {'Message': '{} registered successfully, \
+                    please check your mail to activate your account.'.format(
             user['username']), "Token": token}
         serializer.save()
         return Response(message, status=status.HTTP_201_CREATED)
 
 
-class ActivationView(APIView):
+class ActivationView(RetrieveAPIView):
     """Allow a registered user to activate their account"""
     permission_classes = (AllowAny,)
 
     def get(self, request, uidb64, token):
         """
-        This method defines the get request once a user clicks on the
+        Activate account once a user clicks on the
         activation link
         """
         try:
@@ -118,13 +119,15 @@ class ActivationView(APIView):
             return Response("There is no such user."+str(user))
 
 
-class LoginAPIView(APIView):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+class LoginView(CreateAPIView):
+    """ Login user to AH API"""
+    permission_classes = (AllowAny,)
     authentication_class = (JWTAuthentication,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
 
     def post(self, request):
+        """Login user to AH"""
         user = request.data.get('user', {})
         # Notice here that we do not call `serializer.save()` like we did for
         # the registration endpoint. This is because we don't actually have
@@ -136,12 +139,6 @@ class LoginAPIView(APIView):
         return Response({"Message": "Login successful, welcome {} "
                          .format(email)},
                         status=status.HTTP_200_OK)
-
-    def retrieve(self, request, *args, **kwargs):
-        # There is nothing to validate or save here. Instead, we just want the
-        # serializer to handle turning our `User` object into something that
-        # can be JSONified and sent to the client.
-        serializer = self.serializer_class(request.user)
 
 
 class SocialAuthAPIView(CreateAPIView):

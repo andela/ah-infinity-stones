@@ -12,18 +12,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import include, path
+from django.urls import path, include
 from django.contrib import admin
-from django.contrib.auth import login
-from django.contrib.auth import views as auth_views
+from rest_framework_swagger.views import get_swagger_view
+
+schema_view = get_swagger_view(title='AH-Infinity API')
 
 urlpatterns = [
-    path('', include('authors.apps.articles.url')),
+    path('', schema_view, name="main-view"),
     path('admin/', admin.site.urls),
-    path('api-auth/', include(
-        'rest_framework.urls', namespace='rest_framework')),
-    path('', include('authors.apps.articles.url')),
     path('api/', include(('authors.apps.authentication.urls',
                           'authentication'), namespace='authentication')),
+    path('api/', include(('authors.apps.articles.url', 'articles'),
+                         namespace='articles')),
     path('oauth/', include('social_django.urls', namespace='social')),
 ]

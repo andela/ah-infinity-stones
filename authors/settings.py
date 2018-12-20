@@ -28,6 +28,7 @@ ALLOWED_HOSTS = [
     'promasterguru.com',
     '127.0.0.1',
     'localhost',
+    'ah-infinites-staging.herokuapp.com',
 ]
 
 # Application definition
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_swagger',
     'corsheaders',
     'django_extensions',
     'rest_framework',
@@ -159,8 +161,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated', )
 }
 
 
@@ -208,3 +208,16 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.user_details',
 )
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/articles'
+
+SWAGGER_SETTINGS = {
+     'SHOW_REQUEST_HEADERS': True,
+     'USE_SESSION_AUTH': False,
+     'DOC_EXPANSION': 'list',
+     'SECURITY_DEFINITIONS': {
+         'api_key': {
+             'type': 'apiKey',
+             'in': 'header',
+             'name': 'Authorization'
+         }
+     }
+ }

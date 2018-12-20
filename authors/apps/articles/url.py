@@ -1,5 +1,4 @@
 from django.urls import path
-from rest_framework.urlpatterns import format_suffix_patterns
 from .views import (ArticleCreateView, ArticleUpdateView, ArticleListAPIView,
                     ArticleDeleteAPIView, CommentCreateViewAPIView,
                     CommentListAPIView, CommentUpdateView)
@@ -16,4 +15,3 @@ urlpatterns = [
         'comment/<int:pk>', CommentUpdateView.as_view(),
         name='update_comment'),
 ]
-urlpatterns = format_suffix_patterns(urlpatterns)
