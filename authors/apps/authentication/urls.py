@@ -16,8 +16,7 @@ urlpatterns = [
         PasswordResetDoneAPIView.as_view(),
         name='update_password'),
     re_path(
-        r'^user/activate/(?P<uidb64>[0-9A-Za-z_\-]+)/\
-        (?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/',
+        r'^user/activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/',
         ActivationView.as_view(),
         name='activate'),
 ]

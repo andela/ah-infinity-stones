@@ -12,7 +12,7 @@ class TestProfile(BaseTestCase):
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
         response = self.client.get(self.all_profiles_url)
         self.assertNotEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('Your account is disabled', str(response.data))
+        self.assertIn('Your account is inactive', str(response.data))
 
     def test_get_all_profiles_without_login2(self):
         response = self.client.get(self.profile_url)

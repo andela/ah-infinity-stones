@@ -91,8 +91,8 @@ class RegistrationAPIView(APIView):
             fail_silently=False)
         message = {
             'Message':
-            '{} registered successfully, please check your\
-        mail to activate your account.'.format(user['username']),
+            ('{} registered successfully, please check your '+
+            'mail to activate your account.').format(user['username']),
             "Token":
             token
         }
@@ -121,8 +121,8 @@ class ActivationView(APIView):
                     user.is_active = True
                     user.save()
                     # return redirect('home')
-                    return Response("Thank you for your email confirmation.\
-                    Now you can log into your account.")
+                    return Response("Thank you for your email confirmation." +
+                                    " Now you can log into your account.")
                 else:
                     return Response('Activation link is invalid!')
         except (TypeError, ValueError, OverflowError):
