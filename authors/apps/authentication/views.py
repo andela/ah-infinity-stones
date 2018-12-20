@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import os
 import jwt
 from rest_framework import status
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
@@ -68,6 +69,8 @@ class RegistrationAPIView(APIView):
                 'http://' + domain + '/api/user/activate/' + self.uid + '/' +
                 token + '/'
             })
+
+        
         mail_subject = 'Activate your account.'
         to_email = user['email']
         from_email = 'infinitystones.team@gmail.com'
