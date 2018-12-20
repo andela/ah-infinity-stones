@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import os
 import jwt
 from rest_framework import status
 from rest_framework.generics import (
@@ -56,7 +57,7 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-        domain = '127.0.0.1:8000'
+        domain = '*'
         self.uid = urlsafe_base64_encode(
             force_bytes(user['username'])).decode("utf-8")
         time = datetime.now()
@@ -68,8 +69,7 @@ class RegistrationAPIView(APIView):
             'token': token,
             'username': user['username'],
             'time': time,
-            'link': 'http://' + domain + '/api/user/activate/' +
-                    self.uid + '/' + token + '/'})
+            'link': 'http://' + domain + '/api/user/activate/' + self.uid + '/' + token + '/'})
         mail_subject = 'Activate your account.'
         to_email = user['email']
         from_email = 'infinitystones.team@gmail.com'
