@@ -1,37 +1,28 @@
 from __future__ import unicode_literals
 import jwt
 from rest_framework import status
-from rest_framework.generics import (CreateAPIView)
+from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from django.conf import settings
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.utils.encoding import force_text
-from rest_framework import authentication
 from rest_framework.views import APIView
 from django.utils.http import urlsafe_base64_decode
 from django.utils.http import urlsafe_base64_encode
 from datetime import datetime, timedelta
 from authors.apps.authentication.backends import JWTAuthentication
-from django.shortcuts import render
 from django.utils.encoding import force_bytes
-from django.views.generic import TemplateView
-from django.contrib.auth import user_logged_in
-from requests.exceptions import HTTPError
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from social_django.utils import load_strategy, load_backend
 from social_core.exceptions import MissingBackend
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
-from social_core.exceptions import AuthAlreadyAssociated
 from .models import User
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (AllowAny, IsAuthenticatedOrReadOnly)
 
 from .renderers import UserJSONRenderer
 from .serializers import (LoginSerializer, RegistrationSerializer,
                           UserSerializer, SocialAuthSerializer,
                           ResetQuestSerializer)
-from ...settings import EMAIL_HOST_USER
 
 
 class RegistrationAPIView(APIView):
@@ -220,12 +211,20 @@ class SocialAuthAPIView(CreateAPIView):
 
 
 class PasswordResetBymailAPIView(CreateAPIView):
-    # Allow user to reset password via mail
+    """Sends Password reset link to email """
     serializer_class = ResetQuestSerializer
 
     def post(self, request):
         user_name = request.data
-        serializer = self.serializer_class.validate_email_data(data=user_name)
+        email = user_name['email']
+
+        token = jwt.encode({
+            "email": email,
+            "iat": datetime.now(),
+            "exp": datetime.utcnow() + timedelta(hours=24)
+        },
+                           settings.SECRET_KEY,
+                           algorithm='HS256').decode()
 
         # format the email
         hosting = request.get_host()
@@ -233,23 +232,54 @@ class PasswordResetBymailAPIView(CreateAPIView):
             response = "https://"
         else:
             response = "http://"
-        resetpage = response + hosting + 'api/reset_password/'
+
+        resetpage = response + hosting + '/api/users/reset/' + token
         subject = "You requested password reset"
-        message = "Hello {user_name} you requested for a change in your \n"
-        "password.Please click on the link bellow to continue \n\n{link}\n\n."
-        "If this was not \n"
-        "you Please ignore the message. ".format(user_data=user_name['email'])
-        "you Please ignore the message. ".format(user_data=user_name['email'])
-        from_email = EMAIL_HOST_USER
-        to_list = [user_name['email']]
+        message = render_to_string(
+            'reset_email.html', {
+                'user': user_name,
+                'domain': resetpage,
+                'token': token,
+                'username': user_name['email'],
+                'link': resetpage
+            })
+        to_email = user_name['email']
+        from_email = 'infinitystones.team@gmail.com'
+        send_mail(
+            subject,
+            'Verify your Account',
+            from_email, [
+                to_email,
+            ],
+            html_message=message,
+            fail_silently=False)
 
-        # send the email to user
+        message = {
+            'Message':
+            'Request successful,  please check your mail for password reset link.',
+            'Token':
+            token
+        }
+        return Response(message, status=status.HTTP_200_OK)
 
-        send_mail(subject, message, from_email, to_list, fail_silently=True)
 
-        # Response to the user
-        return Response(
-            {
-                "message": "Please check your email for password reset link"
-            },
-            status=status.HTTP_200_OK)
+class PasswordResetDoneAPIView(UpdateAPIView):
+    """Password Reset view """
+    authentication_classes = (JWTAuthentication, )
+    renderer_classes = (UserJSONRenderer, )
+    serializer_class = UserSerializer
+
+    def put(self, request, token, **kwargs):
+
+        decoded_token = jwt.decode(
+            token, settings.SECRET_KEY, algorithm='HS256')
+        email = decoded_token.get('email')
+        user = User.objects.get(email=email)
+        password = request.data.get('password')
+        user.set_password(password)
+        user.save()
+
+        return Response({
+            "message": "Password successfully updated"
+        },
+                        status=status.HTTP_200_OK)
