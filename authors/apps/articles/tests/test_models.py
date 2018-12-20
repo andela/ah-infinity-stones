@@ -1,12 +1,10 @@
 from django.test import TestCase
 from authors.apps.articles.models import (
     Article, FavoriteArticle, Comment, LikeDislike,
-    ArticleRating, Tag, BookmarkedArticle, Report,
+    ArticleRating, Tag, BookmarkedArticle, ArticleReporting,
     Highlight, CommentHistory
 )
 from authors.apps.authentication.models import User
-
-
 
 
 class ModelTestCase(TestCase):
@@ -40,7 +38,6 @@ class ModelTestCase(TestCase):
 
         # Define test variables for Report model
         self.report = "This story is plagiarised"
-        self.reports = Report(message=self.report)
 
         # Define test variables for Article Highlights
         self.article_section = "I really regreted having lost him"
@@ -105,9 +102,15 @@ class ModelTestCase(TestCase):
 
     def test_article_report_model_can_be_created(self):
         """Test the model can create Report table"""
-        first_count = Report.objects.count()
+        self.article = Article(title="title", art_slug="how-to-make-it-rain",
+                               user=self.user)
+        self.article.save()
+        self.reports = ArticleReporting(username=self.user,
+                                        art_slug=self.article,
+                                        report_msg=self.report)
+        first_count = ArticleReporting.objects.count()
         self.reports.save()
-        last_count = Report.objects.count()
+        last_count = ArticleReporting.objects.count()
         self.assertNotEqual(first_count, last_count)
 
     def test_article_highlights_model_can_be_created(self):

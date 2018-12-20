@@ -5,7 +5,7 @@ from authors.apps.profiles.serializers import ProfileSerializer
 Profile = apps.get_model('profiles', 'Profile')
 from authors.apps.articles.models import (Article, User, Tag, Comment,
                                           LikeDislike, FavoriteArticle,
-                                          ArticleRating)
+                                          ArticleRating, ArticleReporting)
 from rest_framework.validators import UniqueTogetherValidator
 
 
@@ -93,6 +93,54 @@ class ArticleRatingSerializer(serializers.ModelSerializer):
                         validated_data=validated_data)
 
         return article_rating_object
+
+
+class ArticleReportingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleReporting
+        """
+        Declare all fields we need to be returned from ArticleReporting model
+        """
+        fields = '__all__'
+        
+    def __init__(self, *args, **kwargs):
+        super(ArticleReportingSerializer, self).__init__(*args, **kwargs)
+
+        # Override the error_messages of each field with a custom error message
+        for field in self.fields:
+            field_error_messages = self.fields[field].error_messages
+            field_error_messages['null'] = field_error_messages['blank'] \
+                = field_error_messages['required'] \
+                = 'Please fill in the {}'.format(field)
+
+    def update(self, instance, validated_data):
+        """
+        Method for updating an existing ArticleReporting object
+        """
+        
+        instance.art_slug = validated_data.get('art_slug', instance.art_slug)
+        instance.username = validated_data.get('username', instance.username)
+        instance.report_msg = validated_data.get('report_msg',
+                                                 instance.report_msg)
+        instance.save()
+        return instance
+
+    def create(self, validated_data):
+        """
+        Method for creating an ArticleReporting object
+        It checks if a user has reported an article. If yes it calls
+        the update method. If not, it creates a new ArticleReporting object.
+        """
+        article_reporting_object, created = ArticleReporting.objects.get_or_create(
+                        art_slug=validated_data.get('art_slug'),
+                        username=validated_data.get('username'),
+                        defaults={'report_msg': validated_data.get('report_msg', None)}, )
+        
+        if not created:
+            self.update(instance=article_reporting_object,
+                        validated_data=validated_data)
+
+        return article_reporting_object
 
 
 class CommentSerializer(serializers.ModelSerializer):

@@ -21,6 +21,22 @@ class UserTestCase(TestCase):
             format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn(b"successfully", response.content)
+        
+    def test_send_verification_mail(self):
+        """Test that checks if a verification mail is sent"""
+        self.email_verification = {"user": {
+            "username": "Ronny",
+            "email": "ronnymageh@gmail.com",
+            "password": "myPass123!"
+        }
+        }
+        response = self.client.post(
+            self.reg_url,
+            self.email_verification,
+            format="json")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Activate your account.")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_send_verification_mail(self):
         """Test that checks if a verification mail is sent"""
