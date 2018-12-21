@@ -4,6 +4,8 @@ from authors.apps.articles.models import (
     ArticleRating, Tag, BookmarkedArticle, Report,
     Highlight, CommentHistory
 )
+from authors.apps.authentication.models import User
+
 
 
 class ModelTestCase(TestCase):
@@ -13,8 +15,9 @@ class ModelTestCase(TestCase):
         """This method defines the test client and other test variables"""
 
         # Define test variables for articles model
-        self.article_title = "The joy of love"
-        self.article = Article(title=self.article_title)
+        self.user_username = "remmy"
+        self.user = User(username=self.user_username)
+        self.user.save()
 
         # Define test variables for favorite article model
         self.favorite_article = True
@@ -54,6 +57,7 @@ class ModelTestCase(TestCase):
 
     def test_article_model_can_be_created(self):
         """Test the model can create Article table"""
+        self.article = Article(title="title", user=self.user)
         first_count = Article.objects.count()
         self.article.save()
         last_count = Article.objects.count()
