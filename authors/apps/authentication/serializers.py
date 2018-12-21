@@ -15,14 +15,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
         required=True,
         write_only=True,
         error_messages={
-            'required': 'A password is required',
-            'invalid': 'A password must be between 8-128 chars long and must'
-                        ' contain:'
-                        ' capital letter'
-                        ', number'
-                        ' and a special character'
-        }
-    )
+            'required':
+            'A password is required',
+            'invalid':
+            'A password must be between 8-128 chars long and must'
+            ' contain:'
+            ' capital letter'
+            ', number'
+            ' and a special character'
+        })
     # Ensure a user cannot re-use an email to register and must be valid
     email = serializers.EmailField(
         required=True,
@@ -34,9 +35,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         ],
         error_messages={
             'required': 'An email is required',
-            'invalid': "Invalid email: email must be in the format xxxx@xxxx.xx"
-        }
-    )
+            'invalid':
+            "Invalid email: email must be in the format xxxx@xxxx.xx"
+        })
     # ensure username meets the right criteria:
     # - must be unique
     # - must be a minimum of 4 characters and a max of 15 characters
@@ -52,11 +53,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
         ],
         error_messages={
-            'invalid': 'Username must be between 4-15 chars,cannot have a space and can only contain'
+            'invalid':
+            'Username must be between 4-15 chars,cannot have a space and can only contain'
             ' letters, numbers, -, _ and a .',
-            'required': 'A username is required',
-        }
-    )
+            'required':
+            'A username is required',
+        })
 
     token = serializers.SerializerMethodField()
 
@@ -188,3 +190,22 @@ class SocialAuthSerializer(serializers.Serializer):
         max_length=2048, required=True, trim_whitespace=True)
     access_token_secret = serializers.CharField(
         max_length=2048, allow_null=True, default=None, trim_whitespace=True)
+
+
+class ResetQuestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    @staticmethod
+    def validate_email_data(data):
+        email = data.get('email')
+
+        print("serializer_email")
+        # check if eny email exists in the data
+        if email is None:
+            raise serializers.ValidationError(
+                'An email address is required to send request')
+        elif User.objects.filter(email=email).exists():
+            return {"email": email}
+
+        raise serializers.ValidationError(
+            'User with that email does not exist, Please enter your email')
