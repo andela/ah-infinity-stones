@@ -1,17 +1,13 @@
-import json
 import jwt
-
 from rest_framework import status
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
 
 from .test_config import MainTestConfig
 from ..models import User
 from authors.apps.authentication.tests.test_setup import BaseSetUp
-from authors.apps.articles.models import (Article)
+from authors.apps.articles.models import Article
 
 
 class CreateArticleTestCase(TestCase):
@@ -204,22 +200,67 @@ class ArticleLikeDisklikeTestCase(ArticleTagsTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
-class ArticleFavoriteTestCase(ArticleTagsTestCase):
+class ArticleFavoriteTestCase(TestCase):
     """This class defines the api test case to favorite articles"""
 
     def setUp(self):
         """Set or initialize the test data"""
         # add article
-        self.article = {
-            "title": "Life Hack Guide",
-            "author": 1,
-            "tag": [1],
-            "description": "Discorer you life in 3 minutes.",
-            "body": "Many people still do not to know what they value in life",
-            "read_time": 3
+        self.base = BaseSetUp()
+        self.client = self.base.client
+        self.user = {
+            'user': {
+                'username': 'remmy',
+                'email': 'remmy@test.com',
+                'password': '@Password123'
+            }
         }
-        self.favorite = {"article": 1, "user": 1, "favorite": True}
-        self.client.post("api/articles", self.article, format="json")
+        self.article_data = {
+            'art_slug': 'The-war-storry',
+            'title': 'The war storry',
+            'author': 1,
+            'tag': ['js'],
+            'description': 'Love is blind',
+            'body': 'I really loved war until...',
+            'read_time': 3
+        }
+
         response = self.client.post(
-            "api/articles/favorites", self.favorite, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            reverse('authentication:register'), self.user, format="json")
+        decoded = jwt.decode(
+            response.data['Token'], settings.SECRET_KEY, algorithm='HS256')
+        user = User.objects.get(email=decoded['email'])
+        user.is_active = True
+        self.token = response.data['Token']
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        user.save()
+        self.article_url = reverse('articles:articles')
+
+        self.favorite = {"article": 1, "user": 1, "favorite": True}
+        self.client.post(self.article_url, self.article_data, format="json")
+        self.article = Article.objects.get()
+
+    def test_favorite_article(self):
+        response = self.client.post(
+            reverse(
+                'articles:favourite_article',
+                kwargs={'art_slug': self.article.art_slug}),
+            self.favorite,
+            format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_unfavorite_article(self):
+        self.client.post(
+            reverse(
+                'articles:favourite_article',
+                kwargs={'art_slug': self.article.art_slug}),
+            self.favorite,
+            format="json")
+
+        response = self.client.delete(
+            reverse(
+                'articles:favourite_article',
+                kwargs={'art_slug': self.article.art_slug}),
+            self.favorite,
+            format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

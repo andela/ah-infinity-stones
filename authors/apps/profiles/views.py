@@ -1,15 +1,11 @@
-from django.shortcuts import render
+
 from django.http import Http404
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from rest_framework import permissions
 from rest_framework import generics
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
 # local imports
 from authors.apps.core.paginator import CustomPaginator
 from .serializers import ProfileSerializer
