@@ -184,7 +184,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SocialAuthSerializer(serializers.Serializer):
-    """This is a serializer class for social sites keys and secret keys."""
+    """ This class serializes keys and key_secrets google, twitter and \
+    facebook. """
     provider = serializers.CharField(max_length=255, required=True)
     access_token = serializers.CharField(
         max_length=2048, required=True, trim_whitespace=True)

@@ -1,5 +1,9 @@
+import uuid
+
 from django.db import models
+from taggit.managers import TaggableManager
 from authors.apps.authentication.models import (User)
+from django.utils.text import slugify
 
 
 class Tag(models.Model):
@@ -13,11 +17,14 @@ class Tag(models.Model):
 
 class Article(models.Model):
     """This class represents the Articles model"""
-    title = models.CharField(max_length=50, null=False, unique=True)
-    author = models.ManyToManyField(User)
-    tag = models.ManyToManyField(Tag)
+    art_slug = models.SlugField(
+        db_index=True, max_length=250, unique=True, blank=True)
+    title = models.CharField(max_length=250, null=False)
+    user = models.ForeignKey(
+        User, related_name='articles', on_delete=models.CASCADE)
+    tag = TaggableManager(blank=True)
     description = models.CharField(max_length=250, null=False, default="")
-    body = models.TextField(null=False, default="")
+    body = models.TextField(null=False)
     read_time = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -25,6 +32,23 @@ class Article(models.Model):
     def __str__(self):
         """Returns a human readable representation of the model instance"""
         return "{}".format(self.title)
+
+    def generate_slug(self):
+        """
+       Generate a unique identifier for each article.
+        """
+        slug = slugify(self.title)
+        while Article.objects.filter(art_slug=slug).exists():
+            slug = slug + '-' + uuid.uuid4().hex
+        return slug
+
+    def save(self, *args, **kwargs):
+        """
+        Add generated slug to save function.
+        """
+        if not self.art_slug:
+            self.art_slug = self.generate_slug()
+        super(Article, self).save(*args, **kwargs)
 
 
 class FavoriteArticle(models.Model):
@@ -122,7 +146,7 @@ class Report(models.Model):
 class Highlight(models.Model):
     """This class represents the Highlight model"""
     article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
+    author = models.ManyToManyField(User)
     section = models.TextField(null=False)
     index_start = models.IntegerField(default=0)
     index_end = models.IntegerField(default=0)

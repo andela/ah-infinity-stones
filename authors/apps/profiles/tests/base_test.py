@@ -10,6 +10,7 @@ class BaseTestCase(TestCase):
     the app
     """
     register_url = 'http://127.0.0.1:8000/api/users/'
+    login_url = 'http://127.0.0.1:8000/api/users/login/'
 
     def setUp(self):
         self.client = APIClient()
@@ -46,10 +47,10 @@ class BaseTestCase(TestCase):
             self.reg_url,
             self.tri_user,
             format="json")
-        result = response.content  
-        result = json.loads(result.decode('utf-8')) 
-        self.token = result["user"]["Token"] 
-        self.msg = result["user"]["Message"] 
+        result = response.content
+        result = json.loads(result.decode('utf-8'))
+        self.token = result["user"]["Token"]
+        self.msg = result["user"]["Message"]
 
     def test_registration(self):
         self.assertIn('johnny registered successfully', self.msg)
