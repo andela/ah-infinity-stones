@@ -71,7 +71,6 @@ class RegistrationAPIView(APIView):
                 token + '/'
             })
 
-
         mail_subject = 'Activate your account.'
         to_email = user['email']
         from_email = 'infinitystones.team@gmail.com'
@@ -190,15 +189,15 @@ class SocialAuthAPIView(CreateAPIView):
             return Response({
                 "error": "Please enter a valid provider"
             },
-                            status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST)
         try:
             user = backend.do_auth(token, user=authenticated_user)
-
+            # breakpoint()
         except BaseException as error:
             return Response({"error": str(error)})
-        if user and user.is_active:
-            user.is_active = True
+        if user:
             # Serialize the user and get the user details.
+            user.is_active = True
             user.save()
         serializer = UserSerializer(user)
         serialized_data = serializer.data
@@ -220,8 +219,8 @@ class PasswordResetBymailAPIView(CreateAPIView):
             "iat": datetime.now(),
             "exp": datetime.utcnow() + timedelta(hours=24)
         },
-                           settings.SECRET_KEY,
-                           algorithm='HS256').decode()
+            settings.SECRET_KEY,
+            algorithm='HS256').decode()
 
         # format the email
         hosting = request.get_host()
@@ -279,4 +278,4 @@ class PasswordResetDoneAPIView(UpdateAPIView):
         return Response({
             "message": "Password successfully updated"
         },
-                        status=status.HTTP_200_OK)
+            status=status.HTTP_200_OK)
