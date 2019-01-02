@@ -51,13 +51,8 @@ class CreateArticleTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-
-    def test_user_can_get_an_article(self):
-        self.client.post(
-            self.article_url,
-            self.article_data,
-            format="json"
-        )
+    def test_user_can_get_all_articles(self):
+        """Test that a user can get all articles"""
         response = self.client.get(self.article_url,)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -188,6 +183,29 @@ class CreateArticleTestCase(TestCase):
         self.assertIn('article deleted successfully',
                       response.data['message'])
 
+    def test_user_can_tag_an_article(self):
+        """Test user can register new tags"""
+        response = self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['tag'], self.article_data.get("tag"))
+
+    def test_view_article_tags(self):
+        """Test user can be able to view tags on a given article"""
+        slug = self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        ).data["art_slug"]
+        response = self.client.get(
+            self.article_url+"{}".format(slug),
+            format="json"
+        )
+        self.assertEqual(response.data['tag'], self.article_data['tag'])
+
 
 class CreateCommentTestCase(TestCase):
     def setUp(self):
@@ -203,78 +221,7 @@ class CreateCommentTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class ArticleTagsTestCase(TestCase):
-    """This class defines the api for Tag CRUD methods"""
-
-    def setUp(self):
-        """"This method sets the test variables and test client"""
-        self.base = BaseSetUp()
-        self.client = self.base.client
-        # Initialize login credentials
-        self.login_data = {
-            "username": "remmy@test.com",
-            "password": "Password123"
-        }
-        # Declare login response
-        self.login_response = self.client.post(
-            "api/users/login", self.login_data, format="json")
-        # Replace the dummy token with self.login_response.data["Token"]
-        self.token = "eSknaojdIdlafesodoilkjdalfdJndajfdaljfeESFdafjdalfjaofje"
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
-
-    def test_user_can_create_tag(self):
-        """Test user can register new tags"""
-        self.tag_data = {"tag": "Python"}
-        response = self.client.post(
-            "api/articles/tags", self.tag_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_user_can_get_specific_tag(self):
-        """Test api can return specific tag"""
-        response = self.client.get("api/articles/tags/1", format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_user_can_get_all_tag(self):
-        """Test api can return all tags to enable easy filtering of articles"""
-        response = self.client.get("api/articles/tags", format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_user_can_update_specific_tag(self):
-        """Test api can update a specific tag"""
-        self.new_data = {"tag": "Love"}
-        response = self.client.put(
-            "api/articles/tags/1", self.new_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_user_can_delete_specific_tag(self):
-        """Test api can delete specific tag"""
-        response = self.client.get("api/articles/tags/1", format="json")
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-    def test_user_can_tag_an_article(self):
-        """Test api can add tag to an article"""
-        # add a new tag
-        self.new_data = {"tag": "Marriage"}
-        self.client.post("api/articles/tags", self.new_data, format="json")
-        # add article
-        self.article = {
-            'title': 'The marriage story',
-            'author': 1,
-            'tag': [1],
-            'description': 'Love is blind',
-            'body': 'My wife was a criminal until she met this handsome guy.',
-            'read_time': 5
-        }
-        # tag article
-        self.article_data = {
-            "tag": [2],
-        }
-        response = self.client.put(
-            "api/articles/1", self.article_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-
-class ArticleRatingTestCase(ArticleTagsTestCase):
+class ArticleRatingTestCase(TestCase):
     """This class defines the api to article rating test case"""
 
     def setUp(self):
@@ -306,7 +253,7 @@ class ArticleRatingTestCase(ArticleTagsTestCase):
         """
 
 
-class ArticleLikeDisklikeTestCase(ArticleTagsTestCase):
+class ArticleLikeDisklikeTestCase(TestCase):
     """This class defines the api test case to like or dislike articles"""
 
     def setUp(self):
@@ -327,7 +274,42 @@ class ArticleLikeDisklikeTestCase(ArticleTagsTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
-class ArticleFavoriteTestCase(ArticleTagsTestCase):
+class CreateCommentTestCase(TestCase):
+    def setUp(self):
+        self.comment_data = {'article': 1, 'user': 1, 'comment': 'Nice story '}
+
+    def test_user_can_post_a_comment(self):
+        response = self.client.post(
+            reverse('comment'), self.comment_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_user_can_get_all_comments(self):
+        response = self.client.get(reverse('all_comments', ))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class ArticleLikeDisklikeTestCase(TestCase):
+    """This class defines the api test case to like or dislike articles"""
+
+    def setUp(self):
+        """Set or initialize the test data"""
+        # add article
+        self.article = {
+            "title": "The killer disease",
+            "author": 1,
+            "tag": [1],
+            "description": "HIV revisited",
+            "body": "Handily did they love him until he was no more...",
+            "read_time": 2
+        }
+        self.like = {"article": 1, "user": 1, "like": True}
+        self.client.post("api/articles", self.article, format="json")
+        response = self.client.post(
+            "api/articles/likes", self.like, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class ArticleFavoriteTestCase(TestCase):
     """This class defines the api test case to favorite articles"""
 
     def setUp(self):

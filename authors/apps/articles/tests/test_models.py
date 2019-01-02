@@ -8,6 +8,7 @@ from authors.apps.authentication.models import User
 
 
 
+
 class ModelTestCase(TestCase):
     """This class defines the test suit for the artile models"""
 

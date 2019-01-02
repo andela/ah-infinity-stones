@@ -15,7 +15,10 @@ class ArticleCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """ Method for creating an article """
-        serializer.save(user=self.request.user)
+        article = serializer.save(user=self.request.user)
+        tags = Article.objects.get(pk=article.pk)
+        for tag in article.tag:
+            tags.tag.add(tag)
         return Response({"Message": "article created successfully", "Data":
                          serializer.data}, status=status.HTTP_201_CREATED)
 
@@ -41,7 +44,6 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
         except Article.DoesNotExist:
             return Response({"message": "Article does not exist"},
                             status=status.HTTP_404_NOT_FOUND)
-
 
     def delete(self, request, art_slug):
         """ Method for deleting an article """

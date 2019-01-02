@@ -21,8 +21,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include(
         'rest_framework.urls', namespace='rest_framework')),
-    path('api/', include(('authors.apps.authentication.urls',
-                          'authentication'), namespace='authentication')),
+    path('', include('authors.apps.articles.url')),
+    path(
+        'api/',
+        include(('authors.apps.authentication.urls', 'authentication'),
+                namespace='authentication')),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('api/', include('authors.apps.profiles.urls', namespace='profiles')),
 ]
