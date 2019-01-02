@@ -1,3 +1,5 @@
+import math
+
 from authors.apps.articles.models import (Article, Comment, LikeDislike)
 from rest_framework import generics
 from .serializers import (ArticleSerializer, CommentSerializer, LikeSerializer)
@@ -19,8 +21,18 @@ class ArticleCreateView(generics.ListCreateAPIView):
         tags = Article.objects.get(pk=article.pk)
         for tag in article.tag:
             tags.tag.add(tag)
+        text = serializer.validated_data['body']
+        read_time = self.article_read_time(text)
+        serializer.save(user=self.request.user, read_time=read_time)
         return Response({"Message": "article created successfully", "Data":
                          serializer.data}, status=status.HTTP_201_CREATED)
+
+    def article_read_time(self, text):
+        """Method that calculates article read time"""
+        wpm = 200
+        total_words = len(text.split())
+        read_time = total_words / wpm
+        return int(math.ceil(read_time))
 
 
 class DetailsView(generics.RetrieveUpdateDestroyAPIView):
@@ -33,11 +45,18 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
         try:
             article = Article.objects.get(art_slug=art_slug)
             serializer_data = request.data
+
+            if 'body' in request.data:
+                text = serializer_data['body']
+                pc = ArticleCreateView
+                read_time = pc.article_read_time(self, text)
+                serializer_data['read_time'] = read_time
+
             serializer = self.serializer_class(
                 article, data=serializer_data, partial=True)
             serializer.is_valid(raise_exception=True)
-
             serializer.save()
+
             return Response({"message": "article updated successfully",
                              "Articles": serializer.data},
                             status=status.HTTP_200_OK)
