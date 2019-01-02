@@ -11,9 +11,9 @@ from .views import (
 
 
 urlpatterns = [
-    path('articles/', ArticleCreateView.as_view(), name='articles'),
+    path('articles', ArticleCreateView.as_view(), name='articles'),
     path('articles/<art_slug>', DetailsView.as_view(), name='update'),
-    path('articles/', ArticleListAPIView.as_view(), name='list'),
+    path('articles', ArticleListAPIView.as_view(), name='list'),
     path(
         'articles/<art_slug>/like-dislike', ArticleLikeDislikeView.as_view(),
         name='like_article'),

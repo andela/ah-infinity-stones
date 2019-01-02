@@ -161,13 +161,13 @@ class CreateArticleTestCase(TestCase):
 
     def test_user_can_update_article(self):
         """ Test that a logged in user can update an article"""
-        self.client.post(self.article_url, self.article_data, format="json")
-        article = Article.objects.get()
-        self.change_article = {'title': 'The love storry'}
+        slug = self.client.post(
+            self.article_url, self.article_data, format="json").data["art_slug"]
+        self.change_article = {
+            'title': 'The love storry'
+        }
         response = self.client.put(
-            reverse('articles:update', kwargs={'art_slug': article.art_slug}),
-            self.change_article,
-            format='json')
+            self.article_url + "/{}".format(slug), self.change_article, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(b'article updated successfully',
                       response.content)
@@ -202,10 +202,19 @@ class CreateArticleTestCase(TestCase):
             format="json"
         ).data["art_slug"]
         response = self.client.get(
-            self.article_url+"{}".format(slug),
+            self.article_url+"/{}".format(slug),
             format="json"
         )
         self.assertEqual(response.data['tag'], self.article_data['tag'])
+
+    def test_user_can_view_read_time(self):
+        """Test that user can view time it takes to read the article"""
+        self.client.post(self.article_url, self.article_data, format="json")
+        article = Article.objects.get(title=self.article_data['title'])
+        response = self.client.get(
+            self.article_url + "/{}".format(article.art_slug), format="json")
+
+        self.assertEqual(response.data['read_time'], 1)
 
 
 class CreateCommentTestCase(TestCase):
