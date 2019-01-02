@@ -134,8 +134,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 CORS_ORIGIN_WHITELIST = (
-    '0.0.0.0:4000',
-    'localhost:4000',
+    '*'
 )
 
 # Tell Django about the custom `User` model we created. The string

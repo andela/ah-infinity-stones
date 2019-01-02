@@ -4,10 +4,11 @@ from rest_framework import status
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
-
 from ..models import User
 from authors.apps.authentication.tests.test_setup import BaseSetUp
 from authors.apps.articles.models import (Article)
+from authors.apps.authentication.backends import JWTAuthentication
+from rest_framework.test import APIClient
 
 
 class CreateArticleTestCase(TestCase):
@@ -44,6 +45,7 @@ class CreateArticleTestCase(TestCase):
 
     def test_post_article(self):
         """Test that a logged in user can post an article"""
+
         response = self.client.post(
             self.article_url,
             self.article_data,
@@ -149,7 +151,6 @@ class CreateArticleTestCase(TestCase):
 
     def test_all_missing_data(self):
         """Test that a validates that all fields are not missing"""
-
         self.missing_fields = {
         }
         response = self.client.post(self.article_url, self.missing_fields,
@@ -213,12 +214,90 @@ class CreateCommentTestCase(TestCase):
 
     def test_user_can_post_a_comment(self):
         response = self.client.post(
-            reverse('comment'), self.comment_data, format="json")
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['tag'], self.article_data.get("tag"))
 
-    def test_user_can_get_all_comments(self):
-        response = self.client.get(reverse('all_comments', ))
+    def test_view_article_tags(self):
+        """Test user can be able to view tags on a given article"""
+        slug = self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        ).data["art_slug"]
+        response = self.client.get(
+            self.article_url+"/{}".format(slug),
+            format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["tag"], self.article_data.get("tag"))
+
+
+class ArticleShareTestCase(TestCase):
+    """This class defines the api test suite for sharing articles"""
+
+    def setUp(self):
+        """Define test data and test client"""
+        self.user = {
+            "user": {
+                "username": "paul",
+                "email": "paul@test.com",
+                "password": "@Password123"
+            }
+        }
+        self.article_data = {
+            "art_slug": "My-wife-my-life",
+            "title": "Family Life",
+            "author": 1,
+            "tag": ["Marriage", "Love", "Wife", "Relationship"],
+            "description": "Marriage is sweet",
+            "body": "Marriage is a lifetime decision where you decide to love...",
+            "read_time": 8
+        }
+        self.client = APIClient()
+        self.jwt_auth = JWTAuthentication()
+        self.reg_response = self.client.post(
+            reverse("authentication:register"),
+            self.user,
+            format="json"
+        )
+        self.article_url = reverse("articles:articles")
+        self.token = self.reg_response.data.get("Token")
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        user = User.objects.get(email="paul@test.com")
+        user.is_active = True
+        user.save()
+        self.response = self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
+
+    def test_article_has_share_link_for_twitter(self):
+        """User can share article on twitter"""
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(self.response.data.get("share_urls")["twitter"])
+        self.assertIn("twitter", self.response.data.get(
+            "share_urls")["twitter"])
+
+    def test_article_has_share_link_for_facebook(self):
+        """User can share article on facebook"""
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(self.response.data.get("share_urls")["facebook"])
+        self.assertIn("facebook", self.response.data.get(
+            "share_urls")["facebook"]
+        )
+
+    def test_article_has_share_link_for_email(self):
+        """User can share article via email"""
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(self.response.data.get("share_urls")["email"])
+        self.assertIn("mailto", self.response.data.get(
+            "share_urls")["email"]
+        )
 
 
 class ArticleRatingTestCase(TestCase):
@@ -251,41 +330,6 @@ class ArticleRatingTestCase(TestCase):
         """ Add the following code when ratings feature is implemented
             self.assertEqual(response.data['ratings'], 5)
         """
-
-
-class ArticleLikeDisklikeTestCase(TestCase):
-    """This class defines the api test case to like or dislike articles"""
-
-    def setUp(self):
-        """Set or initialize the test data"""
-        # add article
-        self.article = {
-            "title": "The killer disease",
-            "author": 1,
-            "tag": [1],
-            "description": "HIV revisited",
-            "body": "Handily did they love him until he was no more...",
-            "read_time": 2
-        }
-        self.like = {"article": 1, "user": 1, "like": True}
-        self.client.post("api/articles", self.article, format="json")
-        response = self.client.post(
-            "api/articles/likes", self.like, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-
-class CreateCommentTestCase(TestCase):
-    def setUp(self):
-        self.comment_data = {'article': 1, 'user': 1, 'comment': 'Nice story '}
-
-    def test_user_can_post_a_comment(self):
-        response = self.client.post(
-            reverse('comment'), self.comment_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_user_can_get_all_comments(self):
-        response = self.client.get(reverse('all_comments', ))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class ArticleLikeDisklikeTestCase(TestCase):
