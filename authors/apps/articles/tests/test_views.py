@@ -228,21 +228,6 @@ class CreateCommentTestCase(TestCase):
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['tag'], self.article_data.get("tag"))
-
-    def test_view_article_tags(self):
-        """Test user can be able to view tags on a given article"""
-        slug = self.client.post(
-            self.article_url,
-            self.article_data,
-            format="json"
-        ).data["art_slug"]
-        response = self.client.get(
-            self.article_url+"/{}".format(slug),
-            format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["tag"], self.article_data.get("tag"))
 
 
 class ArticleShareTestCase(TestCase):
