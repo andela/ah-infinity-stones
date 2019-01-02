@@ -53,6 +53,26 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ArticleSerializer
     lookup_field = 'art_slug'
 
+    def get(self, request, art_slug, *args, **kwargs):
+        """get single article"""
+        try:
+            article = Article.objects.get(art_slug=art_slug)
+            if request.user:
+                try:
+                    liked = LikeDislike.objects.get(
+                        user=request.user.id, article=article)
+                    if liked.like:
+                        article.liking = True
+                    else:
+                        article.disliking = True
+                except ObjectDoesNotExist:
+                    # in case the user hasn't liked dont break or bring error
+                    pass
+            serailizer = self.serializer_class(article)
+            return Response(serailizer.data)
+        except Article.DoesNotExist as e:
+            return Response({"Message": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
     def put(self, request, art_slug, *args, **kwargs):
         """ Method for updating an article """
         try:
@@ -331,23 +351,32 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
             if liked.like is True and like != 'True':
                 liked.like = like
                 liked.save()
-                return Response({
-                    "Message": "You disliked this article"
-                }, status.HTTP_200_OK)
+                article.dislikes_count = article.dislikes_count + 1
+                article.likes_count = article.likes_count - 1
+                article.save()
+                return Response(
+                    {"Message": "You disliked this article"},
+                    status.HTTP_200_OK)
             elif liked.like is not True and like == 'True':
                 liked.like = like
                 liked.save()
-                return Response({
-                    "Message": "You liked this article"
-                }, status.HTTP_200_OK)
+                article.likes_count = article.likes_count + 1
+                article.dislikes_count = article.dislikes_count - 1
+                article.save()
+                return Response(
+                    {"Message": "You liked this article"}, status.HTTP_200_OK)
             elif liked.like is True and like == 'True':
-                # A user can only like once
+                # sending like request twice removes the like
                 liked.delete()
+                article.likes_count = article.likes_count - 1
+                article.save()
                 msg = '{}, you have unliked this article.'.format(
                     request.user.username)
                 return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
             elif liked.like is not True and like != 'True':
                 liked.delete()
+                article.dislikes_count = article.dislikes_count - 1
+                article.save()
                 msg = '{}, you have undisliked this article.'.format(
                     request.user.username)
                 return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
@@ -360,6 +389,11 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
             serializer = self.serializer_class(data=new_like)
             serializer.is_valid(raise_exception=True)
             serializer.save(article=article, user=request.user)
+            if like == 'True':
+                article.likes_count = article.likes_count + 1
+            else:
+                article.dislikes_count = article.dislikes_count + 1
+            article.save()
         return Response({
             'Message':
             ("Thank you {} for your opinion ".format(request.user.username))
@@ -428,7 +462,6 @@ class FavouriteArticleAPIView(generics.CreateAPIView, generics.DestroyAPIView):
             user=request.user.id, article=article.id)
 
         self.perform_destroy(instance)
-
         return Response(
             {
                 "Message": "You have successfully unfavorited this article."
