@@ -12,7 +12,6 @@ from rest_framework.test import APIClient
 
 class CreateArticleTestCase(TestCase):
     def setUp(self):
-        """Test method that runs before very test"""
         self.base = BaseSetUp()
         self.client = self.base.client
         self.user = {
@@ -266,34 +265,118 @@ class ArticleShareTestCase(TestCase):
 
 class ArticleRatingTestCase(TestCase):
     """This class defines the api to article rating test case"""
-
     def setUp(self):
-        """Set or initialize the test data"""
-        self.rating = {"article": 1, "author": 1, "rating": 5}
-
-    def test_user_can_rate_an_article(self):
-        """Test user can rate articles"""
-        # add article
-        self.article = {
-            "title": "The mighty king",
-            "author": 1,
-            "tag": [1],
-            "description": "Killed a lion with a sword",
-            "body": "The JUJU king has done it again...",
-            "read_time": 4
+        self.base = BaseSetUp()
+        self.client = self.base.client
+        self.user_1 = {
+            'user': {
+                'username': 'remmy',
+                'email': 'remmy@test.com',
+                'password': '@Password123'
+            }
         }
-        self.client.post("api/articles/", self.article, format="json")
+        self.user_2 = {
+            'user': {
+                'username': 'Ronny',
+                'email': 'ronny@test.com',
+                'password': '@Password123'
+            }
+        }
+        self.user_3 = {
+            'user': {
+                'username': 'Mageh',
+                'email': 'mageh@test.com',
+                'password': '@Password123'
+            }
+        }
+        self.rating_1 = {"rating": "2"}
+        self.rating_2 = {"rating": "5"}
+        
+    def register_user(self, user):
+        response = self.client.post(
+            reverse('authentication:register'), user, format="json")
+        decoded = jwt.decode(
+            response.data['Token'], settings.SECRET_KEY, algorithm='HS256')
+        user = User.objects.get(email=decoded['email'])
+        user.is_active = True
+        self.token = response.data['Token']
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        user.save()
+
+    def post_article(self):
+        """Register the author and post article"""
+        # first register the author
+        self.register_user(self.user_1)
+        # add article
+        self.article_url = reverse('articles:articles')
+        self.article_data = {
+            'art_slug': 'the-war-storry',
+            'title': 'The war storry',
+            'author': 1,
+            'tag': ['js'],
+            'description': 'Love is blind',
+            'body': 'I really loved war until...',
+            'read_time': 3
+        }
+        self.response_article_posted = self.client.post(
+            self.article_url,
+            self.article_data,
+            format="json"
+        )
+        self.rating_url = '/api/articles/' + \
+                          self.response_article_posted.data['art_slug'] + \
+                          '/rate'
+
+    def test_author_cannot_rate_their_own_article(self):
+        """Test author cannot rate his/her own article"""
+        self.post_article()
+        response_POST = self.client.post(self.rating_url, self.rating_1,
+                                         format="json")
+        self.assertEqual(response_POST.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response_POST.data['message'], "You cannot rate " +
+                         "your own article.")
+        # Get all ratings for this article
+        response_GET = self.client.get(self.rating_url)
+        self.assertEqual(response_GET.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_GET.data), 0)
+
+    def test_audience_can_rate_article(self):
+        """Test audience (one) can rate an article"""
+        self.post_article()
+        self.register_user(self.user_2)
         # Rate article
-        response = self.client.post(
-            "api/articles/ratings", self.rating, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # Get average ratings average rating for their articles
-        response = self.client.post(
-            "api/articles/user_ratings/1", format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        """ Add the following code when ratings feature is implemented
-            self.assertEqual(response.data['ratings'], 5)
-        """
+        response_POST = self.client.post(self.rating_url, self.rating_1,
+                                         format="json")
+        response_GET = self.client.get(self.rating_url)
+        self.assertEqual(response_POST.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response_POST.data['message'], "Thank you for " +
+                         "taking time to rate this article.")
+        # Get all ratings for this article
+        response_GET = self.client.get(self.rating_url)
+        self.assertEqual(response_GET.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_GET.data), 1)
+
+    def test_article_rating_average_updates(self):
+        """Test user can rate articles"""
+        # user_2 rates the article
+        self.test_audience_can_rate_article()
+        # register user 3
+        self.register_user(self.user_3)
+        # user 3 rates article
+        response_POST = self.client.post(self.rating_url, self.rating_2,
+                                         format="json")
+        response_GET = self.client.get(self.rating_url)
+        self.assertEqual(response_POST.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response_POST.data['message'], "Thank you for " +
+                         "taking time to rate this article.")
+        # Get all ratings for this article
+        response_GET = self.client.get(self.rating_url)
+        self.assertEqual(response_GET.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_GET.data), 2)
+        response_ARTICLE_DATA = self.client.get(self.article_url)
+        self.assertEqual(response_ARTICLE_DATA.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_ARTICLE_DATA.data[0]['rating_average'],
+                         '3.50')
 
 
 class ArticleLikeDisklikeTestCase(TestCase):

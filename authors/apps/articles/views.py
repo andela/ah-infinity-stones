@@ -1,16 +1,19 @@
 import math
 
 from authors.apps.articles.models import (Article, Comment, LikeDislike,
-                                          FavoriteArticle)
+                                          ArticleRating, FavoriteArticle)
 from rest_framework import generics
 from .serializers import (ArticleSerializer, CommentSerializer, LikeSerializer,
-                          FavoriteSerializer)
+                          ArticleRatingSerializer, FavoriteSerializer)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView, ListAPIView,)
 from rest_framework.permissions import (AllowAny, IsAuthenticated)
 from django.core.exceptions import ObjectDoesNotExist
+import json
+from django.db.models import Avg
+from django.core import serializers
 
 
 class ArticleCreateView(generics.ListCreateAPIView):
@@ -135,6 +138,76 @@ class ArticleListAPIView(ListAPIView):
     def get(self, request, slug):
         """ Method for getting all articles """
         return Response(status=status.HTTP_200_OK)
+
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+
+
+class ArticleRatingAPIView(generics.ListCreateAPIView):
+    """
+    Create a new article rating
+    """
+    permission_classes = (IsAuthenticated,)
+    queryset = ArticleRating.objects.all()
+    serializer_class = ArticleRatingSerializer
+
+    def get(self, request, art_slug):
+        """
+        Audience can see all ratings for an article
+        """
+        try:
+            article_ratings = ArticleRating.objects.filter(art_slug=art_slug)
+            article_ratings_data = serializers.serialize("json",
+                                                         article_ratings,
+                                                         fields=('username',
+                                                                 'rating'))
+            article_ratings_json = json.loads(article_ratings_data)
+            all_ratings = []
+            for i in range(len(article_ratings_json)):
+                all_ratings.append(article_ratings_json[i]['fields']) 
+        except Exception:
+            response = {"message": "That article does not exist"}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+        return Response(all_ratings, status=status.HTTP_200_OK)
+
+    def post(self, request, art_slug):
+        """
+        Audience can post a rating for an article
+        """
+        # Retrieve article rating data from the request object and convert it
+        # to a kwargs object
+        # get user data at this point
+        try:
+            article = Article.objects.get(art_slug=art_slug)
+        except Exception:
+            response = {"message": "That article does not exist"}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+
+        if article.user_id == request.user.id:
+            data = {
+                "message": "You cannot rate your own article."
+            }
+            return Response(data, status.HTTP_403_FORBIDDEN)
+
+        article_rating = {
+            'art_slug': art_slug,
+            'username': request.user.username,
+            'rating': request.data.get('rating', None),
+        }
+        # pass article data to the serializer class, check whether the data is
+        # valid and if valid, save it.
+        serializer = self.serializer_class(data=article_rating)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Save the average article rating to the Article model
+        q = ArticleRating.objects.filter(art_slug=article.art_slug).aggregate(
+            Avg('rating'))
+        article.rating_average = q['rating__avg']
+        article.save(update_fields=['rating_average'])
+        data = {"message": "Thank you for taking time to rate this article."}
+
+        return Response(data, status.HTTP_201_CREATED)
 
 
 class CommentCreateViewAPIView(generics.ListCreateAPIView):

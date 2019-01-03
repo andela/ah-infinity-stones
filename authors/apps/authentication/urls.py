@@ -17,7 +17,7 @@ urlpatterns = [
         name='update_password'),
     re_path(
         r'^user/activate/(?P<uidb64>[0-9A-Za-z_\-]+)/\
-    (?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/',
+        (?P<token>[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+))/',
         ActivationView.as_view(),
         name='activate'),
 ]
