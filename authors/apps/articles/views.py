@@ -1,8 +1,10 @@
 import math
 
-from authors.apps.articles.models import (Article, Comment, LikeDislike)
+from authors.apps.articles.models import (Article, Comment, LikeDislike,
+                                          FavoriteArticle)
 from rest_framework import generics
-from .serializers import (ArticleSerializer, CommentSerializer, LikeSerializer)
+from .serializers import (ArticleSerializer, CommentSerializer, LikeSerializer,
+                          FavoriteSerializer)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import (
@@ -24,8 +26,11 @@ class ArticleCreateView(generics.ListCreateAPIView):
         text = serializer.validated_data['body']
         read_time = self.article_read_time(text)
         serializer.save(user=self.request.user, read_time=read_time)
-        return Response({"Message": "article created successfully", "Data":
-                         serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({
+            "Message": "article created successfully",
+            "Data": serializer.data
+        },
+                        status=status.HTTP_201_CREATED)
 
     def article_read_time(self, text):
         """Method that calculates article read time"""
@@ -57,11 +62,15 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            return Response({"message": "article updated successfully",
-                             "Articles": serializer.data},
+            return Response({
+                "message": "article updated successfully",
+                "Articles": serializer.data
+            },
                             status=status.HTTP_200_OK)
         except Article.DoesNotExist:
-            return Response({"message": "Article does not exist"},
+            return Response({
+                "message": "Article does not exist"
+            },
                             status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, art_slug):
@@ -69,10 +78,14 @@ class DetailsView(generics.RetrieveUpdateDestroyAPIView):
         try:
             queryset = Article.objects.get(art_slug=art_slug)
             queryset.delete()
-            return Response({"message": "article deleted successfully"},
+            return Response({
+                "message": "article deleted successfully"
+            },
                             status=status.HTTP_204_NO_CONTENT)
         except Article.DoesNotExist:
-            return Response({"message": "Article does not exist"},
+            return Response({
+                "message": "Article does not exist"
+            },
                             status=status.HTTP_404_NOT_FOUND)
 
 
@@ -154,18 +167,16 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
         like = request.data.get('like', None)
         like = like.capitalize()
         if like is None or not isinstance(bool(like), bool):
-            return Response(
-                {'Message': "Like can only be True or False"},
-                status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'Message': "Like can only be True or False"
+            }, status.HTTP_400_BAD_REQUEST)
         liked = None
         try:
             article = Article.objects.get(art_slug=art_slug)
         except ObjectDoesNotExist:
-            return Response(
-                {
-                    'Message': 'The article does not exist'
-                }, status.HTTP_404_NOT_FOUND
-            )
+            return Response({
+                'Message': 'The article does not exist'
+            }, status.HTTP_404_NOT_FOUND)
         # has the user already liked this article?
         try:
             liked = LikeDislike.objects.get(
@@ -178,33 +189,26 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
             if liked.like is True and like != 'True':
                 liked.like = like
                 liked.save()
-                return Response(
-                    {"Message": "You disliked this article"},
-                    status.HTTP_200_OK)
+                return Response({
+                    "Message": "You disliked this article"
+                }, status.HTTP_200_OK)
             elif liked.like is not True and like == 'True':
                 liked.like = like
                 liked.save()
-                return Response(
-                    {"Message": "You liked this article"}, status.HTTP_200_OK)
+                return Response({
+                    "Message": "You liked this article"
+                }, status.HTTP_200_OK)
             elif liked.like is True and like == 'True':
                 # A user can only like once
                 liked.delete()
                 msg = '{}, you have unliked this article.'.format(
                     request.user.username)
-                return Response(
-                    {
-                        'Message': msg
-                    }, status.HTTP_204_NO_CONTENT
-                )
+                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
             elif liked.like is not True and like != 'True':
                 liked.delete()
                 msg = '{}, you have undisliked this article.'.format(
                     request.user.username)
-                return Response(
-                    {
-                        'Message': msg
-                    }, status.HTTP_204_NO_CONTENT
-                )
+                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
         else:
             new_like = {
                 'article': article.id,
@@ -214,9 +218,76 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
             serializer = self.serializer_class(data=new_like)
             serializer.is_valid(raise_exception=True)
             serializer.save(article=article, user=request.user)
+        return Response({
+            'Message':
+            ("Thank you {} for your opinion ".format(request.user.username))
+        }, status.HTTP_201_CREATED)
+
+
+class FavouriteArticleAPIView(generics.CreateAPIView, generics.DestroyAPIView):
+    """Incase the user feels satisfied with the article, he can favourite it
+    and incase he feels disatisfied with the article he can Unfavourite it. """
+
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def article_exists(self, art_slug):
+        try:
+            article = Article.objects.get(art_slug=art_slug)
+        except Article.DoesNotExist:
+            return Response({
+                'Message': 'The article does not exist'
+            }, status.HTTP_404_NOT_FOUND)
+        return article
+
+    def post(self, request, art_slug):
+        """
+       Implement article favorite  or unfavorite
+       """
+
+        article = self.article_exists(art_slug)
+
+        favorited = FavoriteArticle.objects.filter(
+            user=request.user.id, article=article.id).exists()
+
+        if favorited:
+            return Response(
+                {
+                    'Message': "You have already favourited this article"
+                }, status.HTTP_400_BAD_REQUEST)
+
+        data = {"article": article.id, "user": request.user.id}
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         return Response(
-            {'Message': ("Thank you {} for your opinion ".format(
-                request.user.username)
-            )
-            }, status.HTTP_201_CREATED
-        )
+            {
+                "Message": "You have successfully favorited this article."
+            }, status.HTTP_200_OK)
+
+    def delete(self, request, art_slug):
+        """
+       Implement article favorite  or unfavorite
+       """
+
+        article = self.article_exists(art_slug)
+
+        favorited = FavoriteArticle.objects.filter(
+            user=request.user.id, article=article.id).exists()
+
+        if not favorited:
+            return Response(
+                {
+                    'Message': "You have already unfavourited this article"
+                }, status.HTTP_400_BAD_REQUEST)
+
+        instance = FavoriteArticle.objects.filter(
+            user=request.user.id, article=article.id)
+
+        self.perform_destroy(instance)
+
+        return Response(
+            {
+                "Message": "You have successfully unfavorited this article."
+            }, status.HTTP_200_OK)
