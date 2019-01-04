@@ -34,6 +34,10 @@ class ArticleCreateView(generics.ListCreateAPIView):
         text = serializer.validated_data['body']
         read_time = self.article_read_time(text)
         serializer.save(user=self.request.user, read_time=read_time)
+        # Promote to publisher
+        user = self.request.user
+        user.is_author = True
+        user.save()
         return Response({
             "Message": "article created successfully",
             "Data": serializer.data

@@ -33,6 +33,7 @@ class UserManager(BaseUserManager):
 
         user = self.model(username=username, email=self.normalize_email(email))
         user.set_password(password)
+        user.is_author = False
         user.save()
 
         domain = '127.0.0.1:8000'
@@ -86,6 +87,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     # log into the Django admin site. For most users, this flag will always be
     # falsed.
     is_staff = models.BooleanField(default=False)
+
+    # The `is_author` flag is used to determine if user is an article publisher,
+    # it helps filter user designations or check permitted user actions
+    # this flag will always be falsed.
+    is_author = models.BooleanField(default=False)
 
     # user has the privellege to opt in and out of notifications. By default
     # it's set to False
