@@ -12,5 +12,5 @@ urlpatterns = [
     path('profiles/', views.ProfileApiView.as_view(), name='profile'),
     path('profiles/u', views.ProfileRetrieve.as_view(), name='currentprofile'),
     path('profiles/me', views.ProfileRetrieve.as_view(), name='currentprofile2'),
-    path('profiles/<username>', views.ProfileRetrieveUpdate.as_view(), name='userprofile'),
+    path('profiles/<email>', views.ProfileRetrieveUpdate.as_view(), name='userprofile'),
 ]
