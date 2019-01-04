@@ -56,12 +56,12 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-
-        # get current domain and protocol in use
-        current_site = get_current_site(request)
-        domain = current_site.domain
-        protocol = request.META['SERVER_PROTOCOL'][:4]
-
+        #get current domain and protocol in use
+        domain = os.getenv("FRONT_END_SERVER")
+        if request.is_secure():
+            protocol = "https://"
+        else:
+            protocol = "http://"
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
         time = datetime.now()
@@ -81,7 +81,7 @@ class RegistrationAPIView(APIView):
                 'time':
                 time,
                 'link':
-                protocol + '://' + domain + '/api/user/activate/' + self.uid + '/' +
+                protocol + domain + '/articles/' + self.uid + '/' +
                 token
             })
         mail_subject = 'Activate your account.'
@@ -150,12 +150,15 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         date_time = datetime.now() + timedelta(days=2)
         email = user['email']
-        payload = {
-            'email': user['email'],
-            'exp': int(date_time.strftime('%s'))
-        }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        token = token.decode('utf-8')
+        username = User.objects.get(email=email).username
+        # payload = {
+        #     'email': user['email'],
+        #     'exp': int(date_time.strftime('%s'))
+        # }
+        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        # token = token.decode('utf-8')
+        jwt = JWTAuthentication()
+        token = jwt.generate_token(email, username)
         message = {
             "Message": "Login successful, welcome {} ".format(email),
             "Token": token
