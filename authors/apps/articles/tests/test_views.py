@@ -198,16 +198,6 @@ class CreateArticleTestCase(TestCase):
         self.assertEqual(response.data['read_time'], 1)
 
 
-class CreateCommentTestCase(TestCase):
-    def setUp(self):
-        self.comment_data = {'article': 1, 'user': 1, 'comment': 'Nice story '}
-
-    def test_user_can_post_a_comment(self):
-        response = self.client.post(
-            self.article_url, self.article_data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-
 class ArticleShareTestCase(TestCase):
     """This class defines the api test suite for sharing articles"""
 
