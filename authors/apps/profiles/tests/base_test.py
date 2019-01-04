@@ -56,4 +56,4 @@ class BaseTestCase(TestCase):
         self.msg = result["user"]["Message"]
 
     def test_registration(self):
-        self.assertIn('johnny registered successfully', self.msg)
+        self.assertIn('registered successfully', self.msg)

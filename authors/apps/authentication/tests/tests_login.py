@@ -42,8 +42,8 @@ class UserTestCase(TestCase):
         # Test user registration
         self.assertEqual(self.resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(self.resp.data["Message"],
-                         "remmy registered successfully, please check your\
-        mail to activate your account.")
+                         "remmy registered successfully, please check your " +
+                         "mail to activate your account.")
 
         # Login response
         self.response = self.client.post(
@@ -54,8 +54,8 @@ class UserTestCase(TestCase):
         )
         self.assertEqual(self.response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertIn(
-            self.response.data["detail"], "Your account is disabled, please"
-            " visit your email to activate your account")
+            self.response.data["detail"], "Your account is inactive. Please" +
+            " check your email to activate your account.")
 
     def test_cannot_login_unregistered_user(self):
         """This function tests whether an unregistered user can login"""
