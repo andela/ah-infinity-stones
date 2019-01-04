@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'authors.apps.authentication',
     'authors.apps.core',
     'authors.apps.profiles',
+    'authors.apps.comments',
+    'authors.apps.likedislike',
     'authors.apps.articles',
     'authors.apps.notifications',
     'social_django',

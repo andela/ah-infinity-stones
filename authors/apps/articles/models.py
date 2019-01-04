@@ -5,7 +5,9 @@ from authors.apps.authentication.models import (User)
 from django.utils.text import slugify
 from rest_framework.reverse import reverse as api_reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 
+from authors.apps.likedislike.models import CommentLikeDislike as LikeDislike
 
 class Tag(models.Model):
     """This class represents the Tag model"""
@@ -31,6 +33,7 @@ class Article(models.Model):
     read_time = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    votes = GenericRelation(LikeDislike, related_query_name='articles')
 
     def __str__(self):
         """Returns a human readable representation of the model instance"""
