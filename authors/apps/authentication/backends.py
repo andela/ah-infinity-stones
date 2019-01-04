@@ -12,8 +12,12 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         """This method validates user token and returns the token along with\
          the user email address"""
-
-        token = authentication.get_authorization_header(request)
+        route = request.get_full_path()
+        # import pdb; pdb.set_trace()
+        if route == '/api/users/login/':
+            token = self.generate_token(request.data['user']['email'], " ")
+        else:
+            token = authentication.get_authorization_header(request)
         # Check whether a token is returned
         if not token:
             return None
@@ -28,7 +32,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         try:
             user = User.objects.get(email=payload["email"])
         except User.DoesNotExist:
-            raise AuthenticationFailed('No user found for token provided')
+            raise AuthenticationFailed('User does not exist')
 
         # Check whether the user is active
         if not user.is_active:

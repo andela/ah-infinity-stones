@@ -67,7 +67,7 @@ class ProfileRetrieveUpdate(generics.UpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    def put(self, request, username, format=None):
+    def put(self, request, email, format=None):
         """
         Get user object using the passed username
         Return their profile else return not found
@@ -75,7 +75,7 @@ class ProfileRetrieveUpdate(generics.UpdateAPIView):
         """
         # User must exist lest error
         try:
-            user = get_user_model().objects.get(username=username)
+            user = get_user_model().objects.get(email=email)
         except ObjectDoesNotExist:
             raise Http404()
 
@@ -91,13 +91,13 @@ class ProfileRetrieveUpdate(generics.UpdateAPIView):
         return Response(serializer.errors,
                         status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request, username, format=None):
+    def get(self, request, email, format=None):
         """
         Same as retrieve above, ie get user object using the passed username
         Return their profile else return not found
         """
         try:
-            user = get_user_model().objects.get(username=username)
+            user = get_user_model().objects.get(email=email)
         except ObjectDoesNotExist:
             raise Http404('The user cannot be found')
         profile = Profile.objects.get(user=user)
