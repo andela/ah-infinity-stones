@@ -27,4 +27,5 @@ urlpatterns = [
                 namespace='authentication')),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('api/', include('authors.apps.profiles.urls', namespace='profiles')),
+    path('api/', include('authors.apps.bookmarks.urls', namespace='bookmarks')),
 ]
