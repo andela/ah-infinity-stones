@@ -10,6 +10,7 @@ from .views import (
     ArticleLikeDislikeView,
     ArticleRatingAPIView,
     SearchArticleView,
+    ArticleReportingAPIView,
     FavouriteArticleAPIView)
 
 
@@ -31,5 +32,7 @@ urlpatterns = [
         name='favourite_article'),
     path('articles/<art_slug>/rate', ArticleRatingAPIView.as_view(),
          name='rate'),
+    path('articles/<art_slug>/report', ArticleReportingAPIView.as_view(),
+         name='report'),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)

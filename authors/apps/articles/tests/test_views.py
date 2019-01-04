@@ -8,6 +8,7 @@ from authors.apps.authentication.tests.test_setup import BaseSetUp
 from authors.apps.articles.models import (Article)
 from authors.apps.authentication.backends import JWTAuthentication
 from rest_framework.test import APIClient
+from django.core import mail
 
 
 class CreateArticleTestCase(TestCase):
@@ -379,6 +380,44 @@ class ArticleRatingTestCase(TestCase):
                          '3.50')
 
 
+class ArticleReportingTestCase(ArticleRatingTestCase):
+    """This class defines the api test case to rate articles"""
+    def article_report_input(self):
+        self.reporting_url = '/api/articles/' + \
+            self.response_article_posted.data['art_slug'] + \
+            '/report'
+        self.report_msg = {
+            "report_msg": "This has been plagiarised from my site."
+            }
+        
+    def test_author_cannot_report_their_own_article(self):
+        """Test author cannot report his/her own article"""
+        self.post_article()
+        self.article_report_input()
+        response_POST = self.client.post(self.reporting_url, self.report_msg,
+                                         format="json")
+        self.assertEqual(response_POST.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response_POST.data['message'], "You cannot report " +
+                         "your own article.")
+
+    def test_audience_can_report_article(self):
+        """Test audience can report an article and admin receives mail"""
+        self.post_article()
+        self.register_user(self.user_2)
+        # Report article
+        self.article_report_input()
+        response_POST = self.client.post(self.reporting_url, self.report_msg,
+                                         format="json")
+        self.assertEqual(response_POST.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response_POST.data['message'], "You have reported " +
+                         "this article to the admin.")
+        self.assertEqual(mail.outbox[2].subject, 
+                         "Article:" +
+                         self.response_article_posted.data['art_slug'] +
+                         " has been reported.")
+        self.assertEqual(response_POST.status_code, status.HTTP_201_CREATED)
+        
+        
 class ArticleLikeDisklikeTestCase(TestCase):
     """This class defines the api test case to like or dislike articles"""
 

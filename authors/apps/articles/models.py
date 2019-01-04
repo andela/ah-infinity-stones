@@ -158,17 +158,21 @@ class BookmarkedArticle(models.Model):
         return "{}".format(self.bookmarked)
 
 
-class Report(models.Model):
-    """This class represents the Reports model"""
-    article = models.ManyToManyField(Article)
-    user = models.ManyToManyField(User)
-    message = models.CharField(max_length=250, null=False)
+class ArticleReporting(models.Model):
+    """This class represents the Article Reporting model"""
+    art_slug = models.ForeignKey(Article, to_field="art_slug",
+                                 db_column="art_slug",
+                                 on_delete=models.CASCADE)
+    username = models.ForeignKey(User, to_field="username",
+                                 db_column="username",
+                                 on_delete=models.CASCADE)
+    report_msg = models.CharField(null=False, max_length=2000)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """Returns a human readable representation of the model instance"""
-        return "{}".format(self.message)
+        return "{}".format(self.report_msg)
 
 
 class Highlight(models.Model):

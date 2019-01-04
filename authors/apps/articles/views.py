@@ -1,10 +1,12 @@
 import math
 
 from authors.apps.articles.models import (Article, Comment, LikeDislike,
-                                          ArticleRating, FavoriteArticle)
+                                          ArticleRating, FavoriteArticle,
+                                          ArticleReporting)
 from rest_framework import generics
 from .serializers import (ArticleSerializer, CommentSerializer, LikeSerializer,
-                          ArticleRatingSerializer, FavoriteSerializer)
+                          ArticleRatingSerializer, FavoriteSerializer,
+                          ArticleReportingSerializer)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import (
@@ -14,6 +16,9 @@ from django.core.exceptions import ObjectDoesNotExist
 import json
 from django.db.models import Avg
 from django.core import serializers
+from datetime import datetime
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 
 
 class ArticleCreateView(generics.ListCreateAPIView):
@@ -206,6 +211,70 @@ class ArticleRatingAPIView(generics.ListCreateAPIView):
         article.rating_average = q['rating__avg']
         article.save(update_fields=['rating_average'])
         data = {"message": "Thank you for taking time to rate this article."}
+
+        return Response(data, status.HTTP_201_CREATED)
+
+
+class ArticleReportingAPIView(generics.ListCreateAPIView):
+    """
+    Report an article
+    """
+    permission_classes = (IsAuthenticated,)
+    queryset = ArticleRating.objects.all()
+    serializer_class = ArticleReportingSerializer
+
+    def post(self, request, art_slug):
+        """
+        Audience can report an article
+        """
+        # Retrieve article rating data from the request object and convert it
+        # to a kwargs object
+        # get user data at this point
+        try:
+            article = Article.objects.get(art_slug=art_slug)
+        except Exception:
+            response = {"message": "That article does not exist"}
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+
+        if article.user_id == request.user.id:
+            data = {
+                "message": "You cannot report your own article."
+            }
+            return Response(data, status.HTTP_403_FORBIDDEN)
+
+        article_reporting = {
+            'art_slug': art_slug,
+            'username': request.user.username,
+            'report_msg': request.data.get('report_msg', None),
+        }
+        # pass article reporting data to the serializer class, check whether
+        # the data is valid and if valid, save it.
+        serializer = self.serializer_class(data=article_reporting)
+        serializer.is_valid(raise_exception=True)
+        domain = '127.0.0.1:8000'
+        time = datetime.now()
+        time = datetime.strftime(time, '%d-%B-%Y %H:%M')
+        message = render_to_string('report_article.html', {
+            'user': 'Admin',
+            'admin': 'Admin',
+            'username': request.user.username,
+            'art_slug': art_slug,
+            'report_msg': request.data.get('report_msg', None),
+            'time': time,
+            'link': 'http://' + domain + '/api/articles/' +
+                    art_slug})
+        mail_subject = 'Article:'+art_slug+' has been reported.'
+        to_email = 'ronnymageh@gmail.com'
+        from_email = 'infinitystones.team@gmail.com'
+        send_mail(
+            mail_subject,
+            'Article:'+art_slug+' reported.',
+            from_email,
+            [to_email, ],
+            html_message=message, fail_silently=False)
+
+        serializer.save()
+        data = {"message": "You have reported this article to the admin."}
 
         return Response(data, status.HTTP_201_CREATED)
 
