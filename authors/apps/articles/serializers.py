@@ -1,3 +1,4 @@
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework import serializers
 from django.apps import apps
 from taggit_serializer.serializers import (TagListSerializerField)
@@ -29,9 +30,9 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ("art_slug", "title", "description", "body", "favourite",
-                  "read_time", "tag", "author", "share_urls", "created_at",
-                  "updated_at", "rating_average")
+        fields = ("art_slug", "title", "description", "body", "read_time", "tag", 
+                  "favourite", "likes_count", "dislikes_count", "liking", "disliking",
+                  "rating_average", "share_urls", "author", "created_at", "updated_at")
 
     def get_share_urls(self, instance):
         """
