@@ -29,6 +29,10 @@ class Article(models.Model):
     rating_average = models.DecimalField(
         max_digits=3, decimal_places=2, blank=True, null=True)
     read_time = models.PositiveIntegerField(default=1)
+    likes_count = models.PositiveIntegerField(default=0)
+    dislikes_count = models.PositiveIntegerField(default=0)
+    liking = models.BooleanField(default=False)
+    disliking = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -49,7 +53,8 @@ class Article(models.Model):
         """
         Add generated slug to save function.
         """
-        self.art_slug = self.generate_slug()
+        if not self.art_slug:
+            self.art_slug = self.generate_slug()
         super(Article, self).save(*args, **kwargs)
 
     def get_share_uri(self, request=None):
