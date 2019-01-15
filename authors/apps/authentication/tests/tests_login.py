@@ -1,5 +1,7 @@
 """This module runs tests for user login process"""
+from django.conf import settings
 import json
+import jwt
 from rest_framework import status
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -18,44 +20,40 @@ class UserTestCase(TestCase):
         """This function defines variables tobe used within the class"""
         self.base = BaseSetUp()
         self.client = self.base.client
-        self.email = "remmy@test.com"
-        self.username = "remmy"
-        self.token = JWTAuthentication.generate_token(
-            self, email=self.email, username=self.username)
         self.user = {"user": {
             "email": "remmy@test.com",
-            "password": "Password123"
+            "username": "remmy",
+            "password": "@Password123"
         }}
 
         self.test_password = {"user": {
             "email": "remmy@test.com",
             "password": "passssssss"
         }}
-        # Registration response
-        self.resp = self.client.post(
-            reverse("authentication:register"),
-            self.base.reg_data,
-            format="json")
+        res = self.client.post(
+            reverse('authentication:register'), self.user, format="json")
+        decoded = jwt.decode(
+            res.data['Token'], settings.SECRET_KEY, algorithm='HS256')
+        user = User.objects.get(email=decoded['email'])
+        user.is_active = True
+        user.save()
 
     def test_login_user(self):
         """This function tests whether a registered user can login"""
-        # Test user registration
-        self.assertEqual(self.resp.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(self.resp.data["Message"],
-                         "remmy registered successfully, please check your " +
-                         "mail to activate your account.")
-
+        self.login_details = {
+            "user":{
+                "email": self.user['user']['email'],
+                "password": self.user['user']['password']
+            }
+        }
         # Login response
         self.response = self.client.post(
             reverse("authentication:login"),
-            self.user,
-            format="json",
-            HTTP_AUTHORIZATION=self.resp.data["Token"]
+            self.login_details,
+            format="json"
         )
-        self.assertEqual(self.response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertIn(
-            self.response.data["detail"], "Your account is inactive. Please" +
-            " check your email to activate your account.")
+        self.assertEqual(self.response.status_code, status.HTTP_200_OK)
+        self.assertIn("Login successful", self.response.data['Message'])
 
     def test_cannot_login_unregistered_user(self):
         """This function tests whether an unregistered user can login"""
@@ -69,9 +67,8 @@ class UserTestCase(TestCase):
             format="json"
         )
         self.assertEqual(response.status_code,
-                         status.HTTP_403_FORBIDDEN)
-        self.assertIn(response.data["detail"],
-                      "Authentication credentials were not provided.")
+                         status.HTTP_400_BAD_REQUEST)
+        self.assertIn("A user with this email and password was not found.", response.data['errors']['error'])
 
     def test_cannot_login_user_with_wrong_password(self):
         """This function tests whether a registered user can login with
@@ -83,8 +80,7 @@ class UserTestCase(TestCase):
         response = self.client.post(
             reverse("authentication:login"),
             self.test_password,
-            format="json",
-            HTTP_AUTHORIZATION=self.token
+            format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(

@@ -24,6 +24,7 @@ from django.template.loader import render_to_string
 from social_django.utils import load_strategy, load_backend
 from social_core.exceptions import MissingBackend
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
+from django.contrib.sites.shortcuts import get_current_site
 
 from .renderers import UserJSONRenderer
 from .serializers import (LoginSerializer, RegistrationSerializer,
@@ -55,7 +56,12 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-        domain = '*'
+
+        # get current domain and protocol in use
+        current_site = get_current_site(request)
+        domain = current_site.domain
+        protocol = request.META['SERVER_PROTOCOL'][:4]
+
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
         time = datetime.now()
@@ -75,8 +81,8 @@ class RegistrationAPIView(APIView):
                 'time':
                 time,
                 'link':
-                'http://' + domain + '/api/user/activate/' + self.uid + '/' +
-                token + '/'
+                protocol + '://' + domain + '/api/user/activate/' + self.uid + '/' +
+                token
             })
         mail_subject = 'Activate your account.'
         to_email = user['email']
@@ -91,10 +97,9 @@ class RegistrationAPIView(APIView):
             fail_silently=False)
         message = {
             'Message':
-            ('{} registered successfully, please check your '+
-            'mail to activate your account.').format(user['username']),
-            "Token":
-            token
+            ('{} registered successfully, please check your ' +
+             'mail to activate your account.').format(user['username']),
+            "Token": token
         }
         serializer.save()
         return Response(message, status=status.HTTP_201_CREATED)
@@ -131,8 +136,7 @@ class ActivationView(APIView):
 
 
 class LoginAPIView(APIView):
-    permission_classes = (IsAuthenticatedOrReadOnly, )
-    authentication_class = (JWTAuthentication, )
+    permission_classes = (AllowAny, )
     renderer_classes = (UserJSONRenderer, )
     serializer_class = LoginSerializer
 
@@ -144,11 +148,20 @@ class LoginAPIView(APIView):
         # handles everything we need.
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
+        date_time = datetime.now() + timedelta(days=2)
         email = user['email']
+        payload = {
+            'email': user['email'],
+            'exp': int(date_time.strftime('%s'))
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        token = token.decode('utf-8')
+        message = {
+            "Message": "Login successful, welcome {} ".format(email),
+            "Token": token
+        }
         return Response(
-            {
-                "Message": "Login successful, welcome {} ".format(email)
-            },
+            message,
             status=status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
@@ -200,7 +213,7 @@ class SocialAuthAPIView(CreateAPIView):
             return Response({
                 "error": "Please enter a valid provider"
             },
-                            status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST)
         try:
             user = backend.do_auth(token, user=authenticated_user)
             # breakpoint()
@@ -230,8 +243,8 @@ class PasswordResetBymailAPIView(CreateAPIView):
             "iat": datetime.now(),
             "exp": datetime.utcnow() + timedelta(hours=24)
         },
-                           settings.SECRET_KEY,
-                           algorithm='HS256').decode()
+            settings.SECRET_KEY,
+            algorithm='HS256').decode()
 
         # format the email
         hosting = request.get_host()
@@ -289,4 +302,4 @@ class PasswordResetDoneAPIView(UpdateAPIView):
         return Response({
             "message": "Password successfully updated"
         },
-                        status=status.HTTP_200_OK)
+            status=status.HTTP_200_OK)
