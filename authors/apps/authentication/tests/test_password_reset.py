@@ -26,15 +26,11 @@ class TestPasswordTestCase(TestCase):
         # register and activate user account
         res = self.client.post(
             reverse('authentication:register'), self.user, format="json")
-        # import pdb
-        # pdb.set_trace()
         decoded = jwt.decode(
             res.data['Token'], settings.SECRET_KEY, algorithm='HS256')
         user = User.objects.get(email=decoded['email'])
-        pk = urlsafe_base64_encode(force_bytes(user.id)).decode()
-        url = 'http://127.0.0.1:8000/api/user/activate/{pk}/{token}'.format(
-            pk=pk, token=res.data['Token'])
-        self.client.get(url)
+        user.is_active = True
+        user.save()
 
     def test_send_forgot_password_mail(self):
         """Test that checks if a reset password mail is sent"""
