@@ -58,10 +58,11 @@ class RegistrationAPIView(APIView):
         token = token.decode('utf-8')
 
         # get current domain and protocol in use
-        current_site = get_current_site(request)
-        domain = current_site.domain
-        protocol = request.META['SERVER_PROTOCOL'][:4]
-
+        domain = os.getenv("FRONT_END_SERVER")
+        if request.is_secure():
+            protocol = "https://"
+        else:
+            protocol = "http://"
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
         time = datetime.now()
@@ -81,7 +82,7 @@ class RegistrationAPIView(APIView):
                 'time':
                 time,
                 'link':
-                protocol + '://' + domain + '/api/user/activate/' + self.uid + '/' +
+                protocol + domain + '/articles/' + self.uid + '/' +
                 token
             })
         mail_subject = 'Activate your account.'
