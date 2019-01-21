@@ -23,6 +23,9 @@ urlpatterns = [
         ArticleLikeDislikeView.as_view(),
         name='like_article'),
     path('articles/search/', SearchArticleView.as_view(), name='search'),
+    path('comment/', CommentCreateViewAPIView.as_view(), name='comment'),
+    path('comment/', CommentListAPIView.as_view(), name='all_comments'),
+    path('comment/<slug>', CommentUpdateView.as_view(), name='update_comment'),
     path(
         'articles/<art_slug>/favourite',
         FavouriteArticleAPIView.as_view(),

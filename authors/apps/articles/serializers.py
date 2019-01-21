@@ -23,7 +23,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(serializers.ModelSerializer):
     """Article serializer that converts querysets to json data"""
-    author = serializers.SerializerMethodField(read_only=True)
+    author = serializers.ReadOnlyField(source='user.username')
     tag = TagListSerializerField()
     share_urls = serializers.SerializerMethodField(read_only=True)
     favourite = serializers.SerializerMethodField()
@@ -33,23 +33,6 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = ("art_slug", "title", "description", "body", "read_time", "tag", 
                   "favourite", "likes_count", "dislikes_count", "liking", "disliking",
                   "rating_average", "share_urls", "author", "created_at", "updated_at")
-
-    def get_author(self, obj):
-
-            try:
-                serializer = ProfileSerializer(
-                    instance=Profile.objects.get(user=obj.user)
-                )
-
-                data = {
-                    "username": serializer.data['user']['username'],
-                    "bio": serializer.data['bio'],
-                    "image": serializer.data['image'],
-                    "following": ''
-                }
-                return data
-            except Profile.DoesNotExist:
-                return {"message": "User not found"}
 
     def get_share_urls(self, instance):
         """

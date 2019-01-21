@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'authors.apps.core',
     'authors.apps.profiles',
     'authors.apps.bookmarks',
-    'authors.apps.comments',
     'authors.apps.articles',
     'authors.apps.notifications',
     'social_django',
