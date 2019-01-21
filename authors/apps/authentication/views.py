@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from django.conf import settings
 from rest_framework.response import Response
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.utils.encoding import force_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import authentication
@@ -56,11 +56,9 @@ class RegistrationAPIView(APIView):
         }
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         token = token.decode('utf-8')
-
         # get current domain and protocol in use
-        current_site = get_current_site(request)
-        domain = current_site.domain
-        protocol = request.META['SERVER_PROTOCOL'][:4]
+        domain = request.get_host()
+        protocol = request.scheme
 
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
@@ -114,11 +112,16 @@ class ActivationView(APIView):
         This method defines the get request once a user clicks on the
         activation link
         """
+        host = os.getenv("FRONT_END_SERVER")
+        if request.is_secure():
+            protocol = "https://"
+        else:
+            protocol = "http://"
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
             user = User.objects.get(username=uid)
             if user.is_active is True:
-                return Response({'message': 'Activation link has expired'})
+                return HttpResponse('Activation link has expired')
             else:
                 if user is not None and jwt.decode(
                         token, settings.SECRET_KEY,
@@ -126,13 +129,12 @@ class ActivationView(APIView):
                     user.is_active = True
                     user.save()
                     # return redirect('home')
-                    return Response("Thank you for your email confirmation." +
-                                    " Now you can log into your account.")
+                    return HttpResponseRedirect(protocol + host + '/', status.HTTP_201_CREATED)
                 else:
-                    return Response('Activation link is invalid!')
+                    return HttpResponse('Activation link is invalid!')
         except (TypeError, ValueError, OverflowError):
             user = None
-            return Response("There is no such user." + str(user))
+            return HttpResponse("There is no such user." + str(user))
 
 
 class LoginAPIView(APIView):
@@ -150,12 +152,15 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         date_time = datetime.now() + timedelta(days=2)
         email = user['email']
-        payload = {
-            'email': user['email'],
-            'exp': int(date_time.strftime('%s'))
-        }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-        token = token.decode('utf-8')
+        username = User.objects.get(email=email).username
+        # payload = {
+        #     'email': user['email'],
+        #     'exp': int(date_time.strftime('%s'))
+        # }
+        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        # token = token.decode('utf-8')
+        jwt = JWTAuthentication()
+        token = jwt.generate_token(email, username)
         message = {
             "Message": "Login successful, welcome {} ".format(email),
             "Token": token
@@ -303,3 +308,4 @@ class PasswordResetDoneAPIView(UpdateAPIView):
             "message": "Password successfully updated"
         },
             status=status.HTTP_200_OK)
+
