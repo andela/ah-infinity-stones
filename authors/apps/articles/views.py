@@ -189,7 +189,7 @@ class ArticleRatingAPIView(generics.ListCreateAPIView):
             article_ratings_json = json.loads(article_ratings_data)
             all_ratings = []
             for i in range(len(article_ratings_json)):
-                all_ratings.append(article_ratings_json[i]['fields']) 
+                all_ratings.append(article_ratings_json[i]['fields'])
         except Exception:
             response = {"message": "That article does not exist"}
             return Response(response, status=status.HTTP_404_NOT_FOUND)
@@ -372,14 +372,14 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
                 article.save()
                 msg = '{}, you have unliked this article.'.format(
                     request.user.username)
-                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
+                return Response({'Message': msg}, status.HTTP_200_OK)
             elif liked.like is not True and like != 'True':
                 liked.delete()
                 article.dislikes_count = article.dislikes_count - 1
                 article.save()
                 msg = '{}, you have undisliked this article.'.format(
                     request.user.username)
-                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
+                return Response({'Message': msg}, status.HTTP_200_OK)
         else:
             new_like = {
                 'article': article.id,
