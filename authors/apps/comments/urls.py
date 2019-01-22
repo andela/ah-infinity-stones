@@ -7,8 +7,8 @@ from .models import Comment
 app_name = 'comments'
 
 urlpatterns = [
-    path('comments/<slug:art_slug>/', ArticleCommentAPIView.as_view(), name='comment'),
-    path('comments/<slug:art_slug>/all', ArticleCommentAPIView.as_view(), name='comment_all'),
-    path('comments/<slug:art_slug>/<int:id>/', ArticleCommentUpdateDeleteAPIView.as_view(), name='update_comment'),
+    path('articles/<slug:art_slug>/comments/', ArticleCommentAPIView.as_view(), name='comment'),
+    path('articles/<slug:art_slug>/comments/all', ArticleCommentAPIView.as_view(), name='comment_all'),
+    path('articles/<slug:art_slug>/comments/<int:id>/', ArticleCommentUpdateDeleteAPIView.as_view(), name='update_comment'),
 ]
 

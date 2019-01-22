@@ -5,8 +5,8 @@ from .base_test import BaseTestCase
 class TestProfile(BaseTestCase):
     """Test the Article Comments responses"""
 
-    all_comments_url = '/api/comments/i-saw-ruslan/'
-    one_comment_url = '/api/comments/i-saw-ruslan/1/'
+    all_comments_url = '/api/articles/i-saw-ruslan/comments/'
+    one_comment_url = '/api/articles/i-saw-ruslan/comments/1/'
 
     def test_get_all_comments_without_login(self):
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
