@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from django.conf import settings
 from rest_framework.response import Response
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.utils.encoding import force_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import authentication
@@ -58,7 +58,10 @@ class RegistrationAPIView(APIView):
         token = token.decode('utf-8')
         # get current domain and protocol in use
         domain = request.get_host()
-        protocol = request.scheme
+        if request.is_secure():
+            protocol = "https://"
+        else:
+            protocol = "http://"
 
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
