@@ -58,10 +58,7 @@ class RegistrationAPIView(APIView):
         token = token.decode('utf-8')
         # get current domain and protocol in use
         domain = request.get_host()
-        if request.is_secure():
-            protocol = "https://"
-        else:
-            protocol = "http://"
+        protocol = request.scheme
 
         self.uid = urlsafe_base64_encode(force_bytes(
             user['username'])).decode("utf-8")
@@ -116,15 +113,12 @@ class ActivationView(APIView):
         activation link
         """
         host = os.getenv("FRONT_END_SERVER")
-        if request.is_secure():
-            protocol = "https://"
-        else:
-            protocol = "http://"
+        protocol = request.scheme
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
             user = User.objects.get(username=uid)
             if user.is_active is True:
-                return HttpResponse('Activation link has expired')
+                return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
             else:
                 if user is not None and jwt.decode(
                         token, settings.SECRET_KEY,
@@ -132,12 +126,12 @@ class ActivationView(APIView):
                     user.is_active = True
                     user.save()
                     # return redirect('home')
-                    return HttpResponseRedirect(protocol + host + '/', status.HTTP_201_CREATED)
+                    return HttpResponseRedirect(protocol + '://' +  host + '/', status.HTTP_201_CREATED)
                 else:
-                    return HttpResponse('Activation link is invalid!')
+                    return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
         except (TypeError, ValueError, OverflowError):
             user = None
-            return HttpResponse("There is no such user." + str(user))
+            return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
 
 
 class LoginAPIView(APIView):
