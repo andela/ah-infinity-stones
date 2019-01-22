@@ -118,7 +118,7 @@ class ActivationView(APIView):
             uid = force_text(urlsafe_base64_decode(uidb64))
             user = User.objects.get(username=uid)
             if user.is_active is True:
-                return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
+                return HttpResponse('Activation link has expired')
             else:
                 if user is not None and jwt.decode(
                         token, settings.SECRET_KEY,
@@ -128,10 +128,10 @@ class ActivationView(APIView):
                     # return redirect('home')
                     return HttpResponseRedirect(protocol + '://' +  host + '/', status.HTTP_201_CREATED)
                 else:
-                    return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
+                    return HttpResponse('Activation link is invalid!')
         except (TypeError, ValueError, OverflowError):
             user = None
-            return HttpResponseRedirect(protocol + '://' +  host + '/account/activate')
+            return HttpResponse("There is no such user." + str(user))
 
 
 class LoginAPIView(APIView):
