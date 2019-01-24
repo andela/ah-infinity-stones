@@ -189,7 +189,7 @@ class ArticleRatingAPIView(generics.ListCreateAPIView):
             article_ratings_json = json.loads(article_ratings_data)
             all_ratings = []
             for i in range(len(article_ratings_json)):
-                all_ratings.append(article_ratings_json[i]['fields']) 
+                all_ratings.append(article_ratings_json[i]['fields'])
         except Exception:
             response = {"message": "That article does not exist"}
             return Response(response, status=status.HTTP_404_NOT_FOUND)
@@ -353,33 +353,45 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
                 liked.save()
                 article.dislikes_count = article.dislikes_count + 1
                 article.likes_count = article.likes_count - 1
+                article.disliking = True
+                article.liking = False
                 article.save()
+                res = {"Message": "You disliked this article", "likes_count": article.likes_count,
+                "dislikes_count": article.dislikes_count, "liked": article.liking, "disliked": article.disliking}
                 return Response(
-                    {"Message": "You disliked this article"},
+                    res,
                     status.HTTP_200_OK)
             elif liked.like is not True and like == 'True':
                 liked.like = like
                 liked.save()
                 article.likes_count = article.likes_count + 1
                 article.dislikes_count = article.dislikes_count - 1
+                article.disliking = False
+                article.liking = True
                 article.save()
+                res = {"Message": "You liked this article", "likes_count": article.likes_count,
+                "dislikes_count": article.dislikes_count, "liked": article.liking, "disliked": article.disliking}
                 return Response(
-                    {"Message": "You liked this article"}, status.HTTP_200_OK)
+                    res, status.HTTP_200_OK)
             elif liked.like is True and like == 'True':
                 # sending like request twice removes the like
                 liked.delete()
                 article.likes_count = article.likes_count - 1
+                article.liking = False
                 article.save()
-                msg = '{}, you have unliked this article.'.format(
-                    request.user.username)
-                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
+                res = {"Message": "{}, you have unliked this article.".format(
+                    request.user.username), "likes_count": article.likes_count,
+                "dislikes_count": article.dislikes_count, "liked": article.liking, "disliked": article.disliking}
+                return Response(res, status.HTTP_200_OK)
             elif liked.like is not True and like != 'True':
                 liked.delete()
                 article.dislikes_count = article.dislikes_count - 1
+                article.disliking = False
                 article.save()
-                msg = '{}, you have undisliked this article.'.format(
-                    request.user.username)
-                return Response({'Message': msg}, status.HTTP_204_NO_CONTENT)
+                res = {"Message": "{}, you have undisliked this article.".format(
+                    request.user.username),"likes_count": article.likes_count,
+                "dislikes_count": article.dislikes_count, "liked": article.liking, "disliked": article.disliking}
+                return Response(res, status.HTTP_200_OK)
         else:
             new_like = {
                 'article': article.id,
@@ -391,13 +403,14 @@ class ArticleLikeDislikeView(generics.ListCreateAPIView):
             serializer.save(article=article, user=request.user)
             if like == 'True':
                 article.likes_count = article.likes_count + 1
+                article.liking = True
             else:
                 article.dislikes_count = article.dislikes_count + 1
+                article.disliking = True
             article.save()
-        return Response({
-            'Message':
-            ("Thank you {} for your opinion ".format(request.user.username))
-        }, status.HTTP_201_CREATED)
+            res = {"Message": "Thank you {} for your opinion ".format(request.user.username), "likes_count": article.likes_count,
+                "dislikes_count": article.dislikes_count, "liked": article.liking, "disliked": article.disliking}
+        return Response(res, status.HTTP_201_CREATED)
 
 
 class FavouriteArticleAPIView(generics.CreateAPIView, generics.DestroyAPIView):

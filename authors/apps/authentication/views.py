@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.generics import (CreateAPIView, UpdateAPIView)
 from django.conf import settings
 from rest_framework.response import Response
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.utils.encoding import force_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import authentication
@@ -79,7 +79,7 @@ class RegistrationAPIView(APIView):
                 'time':
                 time,
                 'link':
-                protocol + domain + '/articles/' + self.uid + '/' +
+                protocol + '://' + domain + '/api/user/activate/' + self.uid + '/' +
                 token
             })
         mail_subject = 'Activate your account.'
@@ -113,10 +113,7 @@ class ActivationView(APIView):
         activation link
         """
         host = os.getenv("FRONT_END_SERVER")
-        if request.is_secure():
-            protocol = "https://"
-        else:
-            protocol = "http://"
+        protocol = request.scheme
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
             user = User.objects.get(username=uid)
@@ -129,7 +126,7 @@ class ActivationView(APIView):
                     user.is_active = True
                     user.save()
                     # return redirect('home')
-                    return HttpResponseRedirect(protocol + host + '/', status.HTTP_201_CREATED)
+                    return HttpResponseRedirect(protocol + '://' +  host + '/', status.HTTP_201_CREATED)
                 else:
                     return HttpResponse('Activation link is invalid!')
         except (TypeError, ValueError, OverflowError):
