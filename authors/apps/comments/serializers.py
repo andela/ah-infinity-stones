@@ -16,7 +16,9 @@ class CommentSerializer(serializers.ModelSerializer):
             'article',
             'thread',
             'comment',
-            'author'
+            'author',
+            'created_at',
+            'updated_at'
              )
 
         extra_kwargs = {

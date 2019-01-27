@@ -1,5 +1,5 @@
 import math
-
+import os
 from authors.apps.articles.models import (Article, Comment, LikeDislike,
                                           ArticleRating, FavoriteArticle,
                                           ArticleReporting)
@@ -121,6 +121,10 @@ class SearchArticleView(ListAPIView):
     permission_classes = (AllowAny, )
     serializer_class = ArticleSerializer
 
+    def set_if_not_none(self, mapping, key, value):
+        if value != '':
+            mapping[key] = value
+
     def get(self, request):
         search_params = request.query_params
         query_set = Article.objects.all()
@@ -130,21 +134,27 @@ class SearchArticleView(ListAPIView):
         tag = search_params.get('tag', "")
         keywords = search_params.get('q', "")
         # filter based on the specific filter
-        if author:
+        if author and not title and not tag and not keywords:
             query_set = query_set.filter(user__username=author)
-        elif title:
+        elif title and not author and not tag and not keywords:
             query_set = query_set.filter(title=title)
-        elif tag:
+        elif tag and not author and not title and not keywords:
             query_set = query_set.filter(tag__name=tag)
-        elif keywords:
+        elif keywords and not title and not tag and not author:
             # split the list of comma separated keywords
             words = str(keywords).split(',')
             final_queryset = ''
             for word in words:
                 # filter titles based on the keyword(s) passed and
                 # append them to final_queryset
-                final_queryset = query_set.filter(title__icontains=word)
+                final_queryset = query_set.filter(body__icontains=word)
             query_set = final_queryset
+        else:
+            sort_data = {}
+            self.set_if_not_none(sort_data , 'user__username', author)
+            self.set_if_not_none(sort_data , 'title', title)
+            self.set_if_not_none(sort_data , 'tag__name', tag)
+            query_set = Article.objects.filter(**sort_data)
 
         serializer = self.serializer_class(query_set, many=True)
         return_data = serializer.data
@@ -271,7 +281,8 @@ class ArticleReportingAPIView(generics.ListCreateAPIView):
         # the data is valid and if valid, save it.
         serializer = self.serializer_class(data=article_reporting)
         serializer.is_valid(raise_exception=True)
-        domain = '127.0.0.1:8000'
+        # domain = '127.0.0.1:8000'
+        domain = os.environ['DOMAIN_FRONTEND']
         time = datetime.now()
         time = datetime.strftime(time, '%d-%B-%Y %H:%M')
         message = render_to_string('report_article.html', {
@@ -281,7 +292,7 @@ class ArticleReportingAPIView(generics.ListCreateAPIView):
             'art_slug': art_slug,
             'report_msg': request.data.get('report_msg', None),
             'time': time,
-            'link': 'http://' + domain + '/api/articles/' +
+            'link': domain + '/articles/' +
                     art_slug})
         mail_subject = 'Article:'+art_slug+' has been reported.'
         to_email = 'ronnymageh@gmail.com'

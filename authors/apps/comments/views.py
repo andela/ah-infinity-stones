@@ -32,10 +32,22 @@ class ArticleCommentAPIView(CreateAPIView):
         """Comment on an article"""
         article = get_object_or_404(Article, art_slug=self.kwargs["art_slug"]) 
         data = request.data
+        
+        # comment_set = Comment.objects.all()
+        comment_set = Comment.objects.filter(article__id=article.id)
+        comments = []
+        for comment in comment_set:
+            serializer = CommentSerializer(comment)
+            comments.append(serializer.data)
+
+
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
             serializer.save(author=self.request.user, article=article)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            comments.append(serializer.data)
+
+            return Response(comments, status=status.HTTP_201_CREATED)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, art_slug=None):
@@ -47,14 +59,14 @@ class ArticleCommentAPIView(CreateAPIView):
             serializer = CommentSerializer(comment)
             comments.append(serializer.data)
         commentsCount = len(comments)
-        comments.append({"commentsCount":commentsCount})
+        # comments.append({"commentsCount":commentsCount})
         return Response(comments, status=status.HTTP_200_OK) 
         if commentsCount == 0:
             return Response({"Message":"There are no comments for this article"}, status=status.HTTP_200_OK) 
         elif commentsCount == 1:
             return Response(comments, status=status.HTTP_200_OK) 
         else:
-            comments.append({"commentsCount":commentsCount})
+            # comments.append({"commentsCount":commentsCount})
             page = self.paginate_queryset(comment_set)
             if page is not None:
                 serializer = self.serializer_class(page, many=True)
